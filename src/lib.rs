@@ -1,3 +1,7 @@
+extern crate rand;
+
+use rand::Rng;
+
 #[cfg(test)]
 mod tests {
     #[test]
