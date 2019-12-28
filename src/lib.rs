@@ -1,12 +1,16 @@
 extern crate rand;
 extern crate rand_distr;
 
+use rand::Rng;
 use rand_distr::{Normal, Distribution};
 
 trait Bandit {
     // Get reward from a lever.
     fn use_lever(&mut self, lever : usize) -> f64;
 
+    // Choose a lever uniformly at random for exploration.
+    // Returns the pair of the lever and its reward.
+    fn explore(&mut self) -> (usize,f64);
 }
 
 struct BanditStationary {
@@ -32,6 +36,11 @@ impl Bandit for BanditStationary {
     fn use_lever(&mut self, lever: usize) -> f64 {
         self.levers[lever].sample(&mut rand::thread_rng())
     }
+
+    fn explore(&mut self) -> (usize,f64) {
+        let lever = rand::thread_rng().gen_range(0,self.nb_levers);
+        (lever,self.use_lever(lever))
+    }
 }
 
 struct BanditNonStationary {
@@ -52,6 +61,14 @@ impl BanditNonStationary {
                                   .collect(),
         }
     }
+
+    fn update(&mut self) {
+        self.levers =
+            self.levers.iter()
+                       .zip(self.walks.iter())
+                       .map(|(lever,walk)| lever + walk.sample(&mut rand::thread_rng()))
+                       .collect();
+    }
 }
 
 impl Bandit for BanditNonStationary {
@@ -60,15 +77,16 @@ impl Bandit for BanditNonStationary {
         let result = Normal::new(self.levers[lever],self.std)
                            .unwrap()
                            .sample(&mut rand::thread_rng());
+        self.update();
+        result
 
-        self.levers =
-            self.levers.iter()
-                       .zip(self.walks.iter())
-                       .map(|(lever,walk)| lever + walk.sample(&mut rand::thread_rng()))
-                       .collect();
+    }
 
-        return result
-
+    fn explore(&mut self) -> (usize,f64) {
+        let lever = rand::thread_rng().gen_range(0,self.nb_levers);
+        let result = (lever,self.use_lever(lever));
+        self.update();
+        result
     }
 }
 
