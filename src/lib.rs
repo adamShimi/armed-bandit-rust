@@ -26,9 +26,14 @@ mod problems {
     impl BanditStationary {
 
         fn new( nb_levers : usize, init : (f64,f64)) -> Self {
+            let init_distrib = Normal::new(init.0,init.1).unwrap();
             BanditStationary {
                 nb_levers,
-                levers : (0..nb_levers).map(|_| Normal::new(init.0,init.1).unwrap())
+                levers : (0..nb_levers).map(|_|
+                                           Normal::new(init_distrib.sample(&mut rand::thread_rng()),
+                                                       init.1)
+                                                  .unwrap()
+                                       )
                                        .collect()
             }
         }
