@@ -75,5 +75,41 @@ mod policies {
     }
   }
 
+  struct EGreedy {
+    nb_levers : usize,
+    expl_proba : f64,
+    estimator : Box<dyn Estimator>,
+  }
+
+  impl EGreedy {
+
+    fn new(nb_levers : usize, expl_proba: f64, estimator : Box<dyn Estimator>) -> Self {
+      EGreedy {
+        nb_levers,
+        expl_proba,
+        estimator,
+      }
+    }
+  }
+
+  impl Policy for EGreedy {
+
+    fn decide(&self) -> Action {
+      if rand::thread_rng().gen_bool(self.expl_proba) {
+        Action::Explore
+      } else {
+        Action::Lever(*self.estimator.optimal()
+                                     .iter()
+                                     .choose(&mut rand::thread_rng())
+                                     .unwrap())
+      }
+    }
+
+    // Update its values based on the result of the
+    // step.
+    fn update(&mut self, lever : usize, reward : f64) {
+      self.estimator.update(lever,reward);
+    }
+  }
 
 }
