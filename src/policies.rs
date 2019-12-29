@@ -1,5 +1,8 @@
 mod policies {
 
+  use rand::Rng;
+  use rand::prelude::IteratorRandom;
+
   enum Action {
     Explore,
     Lever(usize),
@@ -18,6 +21,9 @@ mod policies {
   trait Estimator {
     // Give the current estimate of the required lever.
     fn estimate(&self, lever : usize) -> f64;
+
+    // Find the list of levers with the best estimate.
+    fn optimal(&self) -> Vec<usize>;
 
     // Update the estimate of the lever according to
     // the reward.
@@ -43,6 +49,23 @@ mod policies {
 
     fn estimate(&self, lever : usize) -> f64 {
       self.estimates[lever]
+    }
+
+    fn optimal(&self) -> Vec<usize> {
+      self.estimates.iter()
+                    .enumerate()
+                    .fold((self.estimates[0],Vec::new()),
+                          |(mut max,mut occs), (nb,est)| {
+                            if *est > max {
+                              max = *est;
+                              occs.clear();
+                              occs.push(nb);
+                            } else if *est == max {
+                              occs.push(nb);
+                            }
+                            (max,occs)
+                    })
+                    .1
     }
 
     fn update(&mut self, lever : usize, reward : f64) {
