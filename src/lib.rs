@@ -1,10 +1,10 @@
 extern crate rand;
 extern crate rand_distr;
 
-use rand::Rng;
-use rand_distr::{Normal, Distribution};
+mod problems {
 
-mod Problems {
+    use rand::Rng;
+    use rand_distr::{Normal, Distribution};
 
     trait Bandit {
         // Get reward from a lever.
