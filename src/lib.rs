@@ -25,13 +25,11 @@ mod problems {
 
     impl BanditStationary {
 
-        fn new(inits : Vec<(f64,f64)>) -> Self {
-            let levers = inits.iter()
-                              .map(|(mean,std)| Normal::new(*mean,*std).unwrap())
-                              .collect();
+        fn new( nb_levers : usize, init : (f64,f64)) -> Self {
             BanditStationary {
-                nb_levers : inits.len(),
-                levers
+                nb_levers,
+                levers : (0..nb_levers).map(|_| Normal::new(init.0,init.1).unwrap())
+                                       .collect()
             }
         }
     }
