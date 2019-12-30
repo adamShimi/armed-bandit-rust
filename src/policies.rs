@@ -54,12 +54,64 @@ pub mod policies {
     }
   }
 
+  pub struct UCB {
+    time : f64,
+    counts : Vec<f64>,
+    estimator : Box<dyn estimators::Estimator>,
+  }
+
+  impl UCB {
+
+    pub fn new(nb_levers : usize, estimator : Box<dyn estimators::Estimator>) -> Self {
+      UCB {
+        time : 0.0,
+        counts : vec![0.0;nb_levers],
+        estimator,
+      }
+    }
+  }
+
+  impl Policy for UCB {
+
+    fn decide(&self) -> Action {
+      Action::Lever(*self.estimator.all()
+                                  .iter()
+                                  .zip(self.counts.iter())
+                                  .enumerate()
+                                  .fold((self.estimator.estimate(0),Vec::new()),
+                                        |(mut max,mut occs), (nb,(est,count))| {
+                                          let val = *est + (2.0*self.time.log(2.0) / *count).sqrt();
+                                          if val > max {
+                                            max = val;
+                                            occs.clear();
+                                            occs.push(nb);
+                                          } else if val == max {
+                                            occs.push(nb);
+                                          }
+                                          (max,occs)
+                                  })
+                                  .1
+                                  .iter()
+                                  .choose(&mut rand::thread_rng())
+                                  .unwrap()
+                   )
+    }
+
+    // Update its values based on the result of the
+    // step.
+    fn update(&mut self, lever : usize, reward : f64) {
+      self.estimator.update(lever,reward);
+    }
+  }
 
   pub mod estimators {
 
     pub trait Estimator {
       // Give the current estimate of the required lever.
       fn estimate(&self, lever : usize) -> f64;
+
+      // Give all estimates.
+      fn all(&self) -> Vec<&f64>;
 
       // Find the list of levers with the best estimate.
       fn optimal(&self) -> Vec<usize>;
@@ -88,6 +140,10 @@ pub mod policies {
 
       fn estimate(&self, lever : usize) -> f64 {
         self.estimates[lever]
+      }
+
+      fn all(&self) -> Vec<&f64> {
+        self.estimates.iter().collect()
       }
 
       fn optimal(&self) -> Vec<usize> {
@@ -134,6 +190,10 @@ pub mod policies {
 
       fn estimate(&self, lever : usize) -> f64 {
         self.estimates[lever]
+      }
+
+      fn all(&self) -> Vec<&f64> {
+        self.estimates.iter().collect()
       }
 
       fn optimal(&self) -> Vec<usize> {
