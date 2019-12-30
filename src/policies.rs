@@ -1,4 +1,4 @@
-mod policies {
+pub mod policies {
 
   use rand::Rng;
   use rand::prelude::IteratorRandom;
@@ -74,6 +74,51 @@ mod policies {
         self.estimates[lever] =
           self.estimates[lever] + (reward - self.estimates[lever])/self.counter;
         self.counter += 1.0;
+      }
+    }
+
+
+    pub struct ConstantStep {
+      pub step : f64,
+      pub estimates : Vec<f64>,
+    }
+
+    impl ConstantStep {
+
+      pub fn new(nb_levers : usize, step : f64) -> Self {
+        ConstantStep {
+          step,
+          estimates : vec![0.0;nb_levers],
+        }
+      }
+    }
+
+    impl Estimator for ConstantStep {
+
+      fn estimate(&self, lever : usize) -> f64 {
+        self.estimates[lever]
+      }
+
+      fn optimal(&self) -> Vec<usize> {
+        self.estimates.iter()
+                      .enumerate()
+                      .fold((self.estimates[0],Vec::new()),
+                            |(mut max,mut occs), (nb,est)| {
+                              if *est > max {
+                                max = *est;
+                                occs.clear();
+                                occs.push(nb);
+                              } else if *est == max {
+                                occs.push(nb);
+                              }
+                              (max,occs)
+                      })
+                      .1
+      }
+
+      fn update(&mut self, lever : usize, reward : f64) {
+        self.estimates[lever] =
+          self.estimates[lever] + self.step*(reward - self.estimates[lever]);
       }
     }
   }
