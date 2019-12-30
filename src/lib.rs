@@ -1,8 +1,8 @@
 extern crate rand;
 extern crate rand_distr;
 
-mod problems;
-mod policies;
+pub mod problems;
+pub mod policies;
 
 #[cfg(test)]
 mod tests {

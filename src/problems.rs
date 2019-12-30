@@ -1,9 +1,9 @@
-mod problems {
+pub mod problems {
 
   use rand::Rng;
   use rand_distr::{Normal, Distribution};
 
-  trait Bandit {
+  pub trait Bandit {
     // Get reward from a lever.
     fn use_lever(&mut self, lever : usize) -> f64;
 
@@ -15,14 +15,14 @@ mod problems {
 
   // Implementatio of a stationary bandit instance, where
   // nb_levers levers are initialized at according to a normal distribution.
-  struct BanditStationary {
+  pub struct BanditStationary {
     nb_levers : usize,
     levers : Vec<Normal<f64>>,
   }
 
   impl BanditStationary {
 
-    fn new( nb_levers : usize, init : (f64,f64)) -> Self {
+    pub fn new( nb_levers : usize, init : (f64,f64)) -> Self {
       let init_distrib = Normal::new(init.0,init.1).unwrap();
       BanditStationary {
         nb_levers,
@@ -54,7 +54,7 @@ mod problems {
   // Implementation of a nonstationary bandit problems, where
   // levers start with the same mean and move according to a random
   // walk at each step.
-  struct BanditNonStationary {
+  pub struct BanditNonStationary {
     nb_levers : usize,
     levers : Vec<f64>,
     // Only one std, because only the means move according to
@@ -65,7 +65,7 @@ mod problems {
 
   impl BanditNonStationary {
 
-    fn new(nb_levers : usize, init : (f64,f64), walk : (f64,f64)) -> Self {
+    pub fn new(nb_levers : usize, init : (f64,f64), walk : (f64,f64)) -> Self {
       BanditNonStationary {
         nb_levers,
         levers : vec![init.0; nb_levers],
