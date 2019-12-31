@@ -20,14 +20,18 @@ pub mod policies {
 
 
   pub struct EGreedy {
+    nb_levers : usize,
     expl_proba : f64,
     estimator : Box<dyn estimators::Estimator>,
   }
 
   impl EGreedy {
 
-    pub fn new(expl_proba: f64, estimator : Box<dyn estimators::Estimator>) -> Self {
+    pub fn new(nb_levers : usize,
+               expl_proba: f64,
+               estimator : Box<dyn estimators::Estimator>) -> Self {
       EGreedy {
+        nb_levers,
         expl_proba,
         estimator,
       }
@@ -40,7 +44,7 @@ pub mod policies {
       if rand::thread_rng().gen_bool(self.expl_proba) {
         Action::Explore
       } else {
-        Action::Lever(*self.estimator.optimal()
+        Action::Lever(*self.estimator.optimal(self.nb_levers)
                                      .iter()
                                      .choose(&mut rand::thread_rng())
                                      .unwrap())
@@ -55,6 +59,7 @@ pub mod policies {
   }
 
   pub struct UCB {
+    nb_levers : usize,
     time : f64,
     counts : Vec<f64>,
     estimator : Box<dyn estimators::Estimator>,
@@ -64,6 +69,7 @@ pub mod policies {
 
     pub fn new(nb_levers : usize, estimator : Box<dyn estimators::Estimator>) -> Self {
       UCB {
+        nb_levers,
         time : 0.0,
         counts : vec![0.0;nb_levers],
         estimator,
@@ -74,7 +80,7 @@ pub mod policies {
   impl Policy for UCB {
 
     fn decide(&self) -> Action {
-      Action::Lever(*self.estimator.all()
+      Action::Lever(*self.estimator.all(self.nb_levers)
                                   .iter()
                                   .zip(self.counts.iter())
                                   .enumerate()
@@ -110,15 +116,34 @@ pub mod policies {
       // Give the current estimate of the required lever.
       fn estimate(&self, lever : usize) -> f64;
 
-      // Give all estimates.
-      fn all(&self) -> Vec<&f64>;
-
-      // Find the list of levers with the best estimate.
-      fn optimal(&self) -> Vec<usize>;
-
       // Update the estimate of the lever according to
       // the reward.
       fn update(&mut self, lever : usize, reward : f64);
+
+      // Give all estimates.
+      fn all(&self, nb_levers : usize) -> Vec<f64> {
+        (0..nb_levers).map(|x| self.estimate(x))
+                      .collect()
+      }
+
+      // Find the list of levers with the best estimate.
+      fn optimal(&self, nb_levers : usize) -> Vec<usize> {
+        self.all(nb_levers)
+            .iter()
+            .enumerate()
+            .fold((self.estimate(0),Vec::new()),
+                  |(mut max,mut occs), (nb,est)| {
+                    if *est > max {
+                      max = *est;
+                      occs.clear();
+                      occs.push(nb);
+                    } else if *est == max {
+                      occs.push(nb);
+                    }
+                    (max,occs)
+            })
+            .1
+      }
     }
 
     pub struct SampleAverage {
@@ -140,27 +165,6 @@ pub mod policies {
 
       fn estimate(&self, lever : usize) -> f64 {
         self.estimates[lever]
-      }
-
-      fn all(&self) -> Vec<&f64> {
-        self.estimates.iter().collect()
-      }
-
-      fn optimal(&self) -> Vec<usize> {
-        self.estimates.iter()
-                      .enumerate()
-                      .fold((self.estimates[0],Vec::new()),
-                            |(mut max,mut occs), (nb,est)| {
-                              if *est > max {
-                                max = *est;
-                                occs.clear();
-                                occs.push(nb);
-                              } else if *est == max {
-                                occs.push(nb);
-                              }
-                              (max,occs)
-                      })
-                      .1
       }
 
       fn update(&mut self, lever : usize, reward : f64) {
@@ -190,27 +194,6 @@ pub mod policies {
 
       fn estimate(&self, lever : usize) -> f64 {
         self.estimates[lever]
-      }
-
-      fn all(&self) -> Vec<&f64> {
-        self.estimates.iter().collect()
-      }
-
-      fn optimal(&self) -> Vec<usize> {
-        self.estimates.iter()
-                      .enumerate()
-                      .fold((self.estimates[0],Vec::new()),
-                            |(mut max,mut occs), (nb,est)| {
-                              if *est > max {
-                                max = *est;
-                                occs.clear();
-                                occs.push(nb);
-                              } else if *est == max {
-                                occs.push(nb);
-                              }
-                              (max,occs)
-                      })
-                      .1
       }
 
       fn update(&mut self, lever : usize, reward : f64) {
