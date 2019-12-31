@@ -1,22 +1,16 @@
 pub mod problems {
 
-  use rand::Rng;
   use rand_distr::{Normal, Distribution};
 
   pub trait Bandit {
     // Get reward from a lever.
     fn use_lever(&mut self, lever : usize) -> f64;
-
-    // Choose a lever uniformly at random for exploration.
-    // Returns the pair of the lever and its reward.
-    fn explore(&mut self) -> (usize,f64);
   }
 
 
   // Implementatio of a stationary bandit instance, where
   // nb_levers levers are initialized at according to a normal distribution.
   pub struct BanditStationary {
-    nb_levers : usize,
     levers : Vec<Normal<f64>>,
   }
 
@@ -25,7 +19,6 @@ pub mod problems {
     pub fn new( nb_levers : usize, init : (f64,f64)) -> Self {
       let init_distrib = Normal::new(init.0,init.1).unwrap();
       BanditStationary {
-        nb_levers,
         levers : (0..nb_levers).map(|_|
                      Normal::new(init_distrib.sample(&mut rand::thread_rng()),
                            init.1)
@@ -42,10 +35,6 @@ pub mod problems {
       self.levers[lever].sample(&mut rand::thread_rng())
     }
 
-    fn explore(&mut self) -> (usize,f64) {
-      let lever = rand::thread_rng().gen_range(0,self.nb_levers);
-      (lever,self.use_lever(lever))
-    }
   }
 
 
@@ -55,7 +44,6 @@ pub mod problems {
   // levers start with the same mean and move according to a random
   // walk at each step.
   pub struct BanditNonStationary {
-    nb_levers : usize,
     levers : Vec<f64>,
     // Only one std, because only the means move according to
     // the random walk; the standard deviation stays the same.
@@ -67,7 +55,6 @@ pub mod problems {
 
     pub fn new(nb_levers : usize, init : (f64,f64), walk : (f64,f64)) -> Self {
       BanditNonStationary {
-        nb_levers,
         levers : vec![init.0; nb_levers],
         std : init.1,
         walks : (1..nb_levers).map(|_| Normal::new(walk.0,walk.1).unwrap())
@@ -95,11 +82,5 @@ pub mod problems {
 
     }
 
-    fn explore(&mut self) -> (usize,f64) {
-      let lever = rand::thread_rng().gen_range(0,self.nb_levers);
-      let result = (lever,self.use_lever(lever));
-      self.update();
-      result
-    }
   }
 }

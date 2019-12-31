@@ -3,15 +3,10 @@ pub mod policies {
   use rand::Rng;
   use rand::prelude::IteratorRandom;
 
-  enum Action {
-    Explore,
-    Lever(usize),
-  }
-
   trait Policy {
     // Choose the action: either a lever for exploiting
     // or the exploring option.
-    fn decide(&self) -> Action;
+    fn decide(&self) -> usize;
 
     // Update its values based on the result of the
     // step.
@@ -36,18 +31,23 @@ pub mod policies {
         estimator,
       }
     }
+
+
+    fn explore(&self) -> usize {
+      rand::thread_rng().gen_range(0,self.nb_levers)
+    }
   }
 
   impl Policy for EGreedy {
 
-    fn decide(&self) -> Action {
+    fn decide(&self) -> usize {
       if rand::thread_rng().gen_bool(self.expl_proba) {
-        Action::Explore
+        self.explore()
       } else {
-        Action::Lever(*self.estimator.optimal(self.nb_levers)
-                                     .iter()
-                                     .choose(&mut rand::thread_rng())
-                                     .unwrap())
+        *self.estimator.optimal(self.nb_levers)
+                       .iter()
+                       .choose(&mut rand::thread_rng())
+                       .unwrap()
       }
     }
 
@@ -79,28 +79,27 @@ pub mod policies {
 
   impl Policy for UCB {
 
-    fn decide(&self) -> Action {
-      Action::Lever(*self.estimator.all(self.nb_levers)
-                                  .iter()
-                                  .zip(self.counts.iter())
-                                  .enumerate()
-                                  .fold((self.estimator.estimate(0),Vec::new()),
-                                        |(mut max,mut occs), (nb,(est,count))| {
-                                          let val = *est + (2.0*self.time.log(2.0) / *count).sqrt();
-                                          if val > max {
-                                            max = val;
-                                            occs.clear();
-                                            occs.push(nb);
-                                          } else if val == max {
-                                            occs.push(nb);
-                                          }
-                                          (max,occs)
-                                  })
-                                  .1
-                                  .iter()
-                                  .choose(&mut rand::thread_rng())
-                                  .unwrap()
-                   )
+    fn decide(&self) -> usize {
+      *self.estimator.all(self.nb_levers)
+                     .iter()
+                     .zip(self.counts.iter())
+                     .enumerate()
+                     .fold((self.estimator.estimate(0),Vec::new()),
+                           |(mut max,mut occs), (nb,(est,count))| {
+                             let val = *est + (2.0*self.time.log(2.0) / *count).sqrt();
+                             if val > max {
+                               max = val;
+                               occs.clear();
+                               occs.push(nb);
+                             } else if val == max {
+                               occs.push(nb);
+                             }
+                             (max,occs)
+                     })
+                     .1
+                     .iter()
+                     .choose(&mut rand::thread_rng())
+                     .unwrap()
     }
 
     // Update its values based on the result of the
