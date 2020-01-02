@@ -1,8 +1,12 @@
 use rand_distr::{Normal, Distribution};
+use std::collections::HashSet;
 
 pub trait Bandit {
   // Get reward from a lever.
   fn use_lever(&mut self, lever : usize) -> f64;
+
+  // Get set of optimal levers.
+  fn optimal_levers(&self) -> HashSet<usize>;
 }
 
 
@@ -10,19 +14,35 @@ pub trait Bandit {
 // nb_levers levers are initialized at according to a normal distribution.
 pub struct BanditStationary {
   levers : Vec<Normal<f64>>,
+  optimals : HashSet<usize>,
 }
 
 impl BanditStationary {
 
-  pub fn new( nb_levers : usize, init : (f64,f64)) -> Self {
+  pub fn new(nb_levers : usize, init : (f64,f64)) -> Self {
     let init_distrib = Normal::new(init.0,init.1).unwrap();
+    let (levers,optimals) : (Vec<Normal<f64>>,Vec<f64>) =
+      (0..nb_levers).map(|_| {
+                      let mean = init_distrib.sample(&mut rand::thread_rng());
+                      (Normal::new(mean, init.1).unwrap(),mean)
+                    })
+                    .unzip();
     BanditStationary {
-      levers : (0..nb_levers).map(|_|
-                   Normal::new(init_distrib.sample(&mut rand::thread_rng()),
-                         init.1)
-                       .unwrap()
-                 )
-                 .collect()
+      levers,
+      optimals : optimals.iter()
+                         .enumerate()
+                         .fold((optimals[0],HashSet::new()),
+                           |(mut max,mut occs), (nb,est)| {
+                             if *est > max {
+                               max = *est;
+                               occs.clear();
+                               occs.insert(nb);
+                             } else if *est == max {
+                               occs.insert(nb);
+                             }
+                             (max,occs)
+                         })
+                         .1
     }
   }
 }
@@ -31,6 +51,10 @@ impl Bandit for BanditStationary {
 
   fn use_lever(&mut self, lever: usize) -> f64 {
     self.levers[lever].sample(&mut rand::thread_rng())
+  }
+
+  fn optimal_levers(&self) -> HashSet<usize> {
+    self.optimals.clone()
   }
 
 }
@@ -47,6 +71,7 @@ pub struct BanditNonStationary {
   // the random walk; the standard deviation stays the same.
   std : f64,
   walks : Vec<Normal<f64>>,
+  optimals : HashSet<usize>,
 }
 
 impl BanditNonStationary {
@@ -55,8 +80,9 @@ impl BanditNonStationary {
     BanditNonStationary {
       levers : vec![init.0; nb_levers],
       std : init.1,
-      walks : (1..nb_levers).map(|_| Normal::new(walk.0,walk.1).unwrap())
-                 .collect(),
+      walks : (0..nb_levers).map(|_| Normal::new(walk.0,walk.1).unwrap())
+                            .collect(),
+      optimals : (0..nb_levers).collect(),
     }
   }
 
@@ -66,6 +92,22 @@ impl BanditNonStationary {
            .zip(self.walks.iter())
            .map(|(lever,walk)| lever + walk.sample(&mut rand::thread_rng()))
            .collect();
+    self.optimals.clear();
+    self.optimals =
+      self.levers.iter()
+                 .enumerate()
+                 .fold((self.levers[0],HashSet::new()),
+                   |(mut max,mut occs), (nb,est)| {
+                     if *est > max {
+                       max = *est;
+                       occs.clear();
+                       occs.insert(nb);
+                     } else if *est == max {
+                       occs.insert(nb);
+                     }
+                     (max,occs)
+                 })
+                 .1
   }
 }
 
@@ -78,6 +120,10 @@ impl Bandit for BanditNonStationary {
     self.update();
     result
 
+  }
+
+  fn optimal_levers(&self) -> HashSet<usize> {
+    self.optimals.clone()
   }
 
 }
