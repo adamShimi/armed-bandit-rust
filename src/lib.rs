@@ -29,6 +29,16 @@ impl Experiment {
   }
 
 
+  pub fn optimal_choices(self) -> Vec<usize> {
+    let optimals = self.problem.optimal_levers();
+    self.results.into_iter()
+                .enumerate()
+                .filter(|(_nb,step)| {
+                  optimals.contains(&step.lever)
+                })
+                .map(|(nb,_step)| nb)
+                .collect()
+  }
 }
 
 pub struct Step {
