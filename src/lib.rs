@@ -7,27 +7,27 @@ pub mod policies;
 pub struct Experiment {
   problem : Box<dyn problems::Bandit>,
   policy : Box<dyn policies::Policy>,
+  results : Vec<Step>,
 }
 
 impl Experiment {
 
   pub fn new(problem : Box<dyn problems::Bandit>,
-         policy : Box<dyn policies::Policy>) -> Self {
+             policy : Box<dyn policies::Policy>) -> Self {
     Experiment {
       problem,
       policy,
+      results : Vec::new(),
     }
   }
 
-  pub fn step(&mut self) -> Step {
+  pub fn step(&mut self) {
     let lever = self.policy.decide();
     let reward = self.problem.use_lever(lever);
     self.policy.update(lever,reward);
-    Step {
-      lever,
-      reward,
-    }
+    self.results.push(Step { lever, reward, });
   }
+
 
 }
 
