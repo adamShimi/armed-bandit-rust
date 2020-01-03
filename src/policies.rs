@@ -1,3 +1,5 @@
+use crate::helper;
+
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 
@@ -109,6 +111,8 @@ impl Policy for UCB {
 
 pub mod estimators {
 
+  use crate::helper;
+
   pub trait Estimator {
     // Give the current estimate of the required lever.
     fn estimate(&self, lever : usize) -> f64;
@@ -125,21 +129,7 @@ pub mod estimators {
 
     // Find the list of levers with the best estimate.
     fn optimal(&self, nb_levers : usize) -> Vec<usize> {
-      self.all(nb_levers)
-          .iter()
-          .enumerate()
-          .fold((self.estimate(0),Vec::new()),
-                |(mut max,mut occs), (nb,est)| {
-                  if *est > max {
-                    max = *est;
-                    occs.clear();
-                    occs.push(nb);
-                  } else if *est == max {
-                    occs.push(nb);
-                  }
-                  (max,occs)
-          })
-          .1
+      helper::indices_max(self.all(nb_levers))
     }
   }
 
