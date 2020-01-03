@@ -3,6 +3,7 @@ extern crate rand_distr;
 
 pub mod problems;
 pub mod policies;
+pub mod helper;
 
 pub struct Experiment {
   problem : Box<dyn problems::Bandit>,
