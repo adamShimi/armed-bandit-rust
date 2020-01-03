@@ -1,5 +1,3 @@
-use crate::helper;
-
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 
@@ -44,7 +42,7 @@ impl Policy for EGreedy {
     if rand::thread_rng().gen_bool(self.expl_proba) {
       self.explore()
     } else {
-      *self.estimator.optimal(self.nb_levers)
+      *self.estimator.optimal(self.nb_levers, Box::new(|x| *x))
                      .iter()
                      .choose(&mut rand::thread_rng())
                      .unwrap()
@@ -128,8 +126,10 @@ pub mod estimators {
     }
 
     // Find the list of levers with the best estimate.
-    fn optimal(&self, nb_levers : usize) -> Vec<usize> {
-      helper::indices_max(self.all(nb_levers))
+    fn optimal(&self,
+               nb_levers : usize,
+               to_max: Box<dyn Fn(&f64) -> f64>) -> Vec<usize> {
+      helper::indices_max(self.all(nb_levers), to_max)
     }
   }
 

@@ -1,5 +1,8 @@
+use crate::helper;
+
 use rand_distr::{Normal, Distribution};
 use std::collections::HashSet;
+use std::iter::FromIterator;
 
 pub trait Bandit {
   // Get reward from a lever.
@@ -29,20 +32,7 @@ impl BanditStationary {
                     .unzip();
     BanditStationary {
       levers,
-      optimals : optimals.iter()
-                         .enumerate()
-                         .fold((optimals[0],HashSet::new()),
-                           |(mut max,mut occs), (nb,est)| {
-                             if *est > max {
-                               max = *est;
-                               occs.clear();
-                               occs.insert(nb);
-                             } else if *est == max {
-                               occs.insert(nb);
-                             }
-                             (max,occs)
-                         })
-                         .1
+      optimals : HashSet::from_iter(helper::indices_max(optimals, Box::new(|x| *x))),
     }
   }
 }
