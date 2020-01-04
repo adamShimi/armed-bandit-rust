@@ -1,3 +1,5 @@
+use crate::helper;
+
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 
@@ -78,26 +80,16 @@ impl UCB {
 impl Policy for UCB {
 
   fn decide(&self) -> usize {
-    *self.estimator.all(self.nb_levers)
-                   .iter()
-                   .zip(self.counts.iter())
-                   .enumerate()
-                   .fold((self.estimator.estimate(0),Vec::new()),
-                         |(mut max,mut occs), (nb,(est,count))| {
-                           let val = *est + (2.0*self.time.log(2.0) / *count).sqrt();
-                           if val > max {
-                             max = val;
-                             occs.clear();
-                             occs.push(nb);
-                           } else if val == max {
-                             occs.push(nb);
-                           }
-                           (max,occs)
-                   })
-                   .1
-                   .iter()
-                   .choose(&mut rand::thread_rng())
-                   .unwrap()
+    let est_counts : Vec<f64> =
+      self.estimator.all(self.nb_levers)
+                    .iter()
+                    .zip(self.counts.iter())
+                    .map( |x| x.0 + (2.0*self.time.log(2.0) / *x.1).sqrt())
+                    .collect();
+    *helper::indices_max(&est_counts,Box::new(|x| *x))
+            .iter()
+            .choose(&mut rand::thread_rng())
+            .unwrap()
   }
 
   // Update its values based on the result of the
