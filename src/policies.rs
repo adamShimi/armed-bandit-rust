@@ -129,7 +129,7 @@ pub mod estimators {
     fn optimal(&self,
                nb_levers : usize,
                to_max: Box<dyn Fn(&f64) -> f64>) -> Vec<usize> {
-      helper::indices_max(self.all(nb_levers), to_max)
+      helper::indices_max(&self.all(nb_levers), to_max)
     }
   }
 

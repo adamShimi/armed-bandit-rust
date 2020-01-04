@@ -32,7 +32,7 @@ impl BanditStationary {
                     .unzip();
     BanditStationary {
       levers,
-      optimals : HashSet::from_iter(helper::indices_max(optimals, Box::new(|x| *x))),
+      optimals : HashSet::from_iter(helper::indices_max(&optimals, Box::new(|x| *x))),
     }
   }
 }
@@ -83,21 +83,7 @@ impl BanditNonStationary {
            .map(|(lever,walk)| lever + walk.sample(&mut rand::thread_rng()))
            .collect();
     self.optimals.clear();
-    self.optimals =
-      self.levers.iter()
-                 .enumerate()
-                 .fold((self.levers[0],HashSet::new()),
-                   |(mut max,mut occs), (nb,est)| {
-                     if *est > max {
-                       max = *est;
-                       occs.clear();
-                       occs.insert(nb);
-                     } else if *est == max {
-                       occs.insert(nb);
-                     }
-                     (max,occs)
-                 })
-                 .1
+    self.optimals = HashSet::from_iter(helper::indices_max(&self.levers, Box::new(|x| *x)));
   }
 }
 
