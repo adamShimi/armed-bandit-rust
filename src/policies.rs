@@ -44,7 +44,7 @@ impl Policy for EGreedy {
     if rand::thread_rng().gen_bool(self.expl_proba) {
       self.explore()
     } else {
-      *self.estimator.optimal(self.nb_levers, Box::new(|x| *x))
+      *self.estimator.optimal(self.nb_levers)
                      .iter()
                      .choose(&mut rand::thread_rng())
                      .unwrap()
@@ -86,7 +86,7 @@ impl Policy for UCB {
                     .zip(self.counts.iter())
                     .map( |x| x.0 + (2.0*self.time.log(2.0) / *x.1).sqrt())
                     .collect();
-    *helper::indices_max(&est_counts,Box::new(|x| *x))
+    *helper::indices_max(&est_counts)
             .iter()
             .choose(&mut rand::thread_rng())
             .unwrap()
@@ -118,10 +118,8 @@ pub mod estimators {
     }
 
     // Find the list of levers with the best estimate.
-    fn optimal(&self,
-               nb_levers : usize,
-               to_max: Box<dyn Fn(&f64) -> f64>) -> Vec<usize> {
-      helper::indices_max(&self.all(nb_levers), to_max)
+    fn optimal(&self, nb_levers : usize) -> Vec<usize> {
+      helper::indices_max(&self.all(nb_levers))
     }
   }
 
