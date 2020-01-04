@@ -1,4 +1,4 @@
-pub fn indices_max(vals : &Vec<f64>, to_max: Box<dyn (Fn(&f64) -> f64)>) -> Vec<usize> {
+pub fn indices_max(vals : &[f64], to_max: Box<dyn (Fn(&f64) -> f64)>) -> Vec<usize> {
   if vals.is_empty() {
     Vec::new()
   } else {
