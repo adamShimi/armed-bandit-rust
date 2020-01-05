@@ -1,5 +1,8 @@
 extern crate rand;
 extern crate rand_distr;
+extern crate gnuplot;
+
+use gnuplot::{Figure, Caption, Color};
 
 pub mod problems;
 pub mod policies;
