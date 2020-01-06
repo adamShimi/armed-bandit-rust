@@ -3,6 +3,7 @@ use crate::helper;
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 
+
 pub trait Policy {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
@@ -103,7 +104,9 @@ pub mod estimators {
 
   use crate::helper;
 
-  pub trait Estimator {
+  use dyn_clone::DynClone;
+
+  pub trait Estimator : DynClone {
     // Give the current estimate of the required lever.
     fn estimate(&self, lever : usize) -> f64;
 
@@ -123,6 +126,9 @@ pub mod estimators {
     }
   }
 
+  dyn_clone::clone_trait_object!(Estimator);
+
+  #[derive(Clone)]
   pub struct SampleAverage {
     pub counter : f64,
     pub estimates : Vec<f64>,
@@ -152,6 +158,7 @@ pub mod estimators {
   }
 
 
+  #[derive(Clone)]
   pub struct ConstantStep {
     pub step : f64,
     pub estimates : Vec<f64>,
