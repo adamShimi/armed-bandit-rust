@@ -9,6 +9,7 @@ pub mod problems;
 pub mod policies;
 pub mod helper;
 
+#[derive(Clone)]
 pub struct Experiment {
   problem : Box<dyn problems::Bandit>,
   policy : Box<dyn policies::Policy>,
@@ -46,6 +47,7 @@ impl Experiment {
   }
 }
 
+#[derive(Clone)]
 pub struct Step {
   pub lever : usize,
   pub reward : f64,
