@@ -1,5 +1,6 @@
 extern crate rand;
 extern crate rand_distr;
+extern crate dyn_clone;
 extern crate gnuplot;
 
 use gnuplot::{Figure, Caption, Color};
