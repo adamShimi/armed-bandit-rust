@@ -4,7 +4,9 @@ use rand_distr::{Normal, Distribution};
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-pub trait Bandit {
+use dyn_clone::DynClone;
+
+pub trait Bandit : DynClone {
   // Get reward from a lever.
   fn use_lever(&mut self, lever : usize) -> f64;
 
@@ -12,9 +14,11 @@ pub trait Bandit {
   fn optimal_levers(&self) -> HashSet<usize>;
 }
 
+dyn_clone::clone_trait_object!(Bandit);
 
 // Implementatio of a stationary bandit instance, where
 // nb_levers levers are initialized at according to a normal distribution.
+#[derive(Clone)]
 pub struct BanditStationary {
   levers : Vec<Normal<f64>>,
   optimals : HashSet<usize>,
@@ -55,6 +59,7 @@ impl Bandit for BanditStationary {
 // Implementation of a nonstationary bandit problems, where
 // levers start with the same mean and move according to a random
 // walk at each step.
+#[derive(Clone)]
 pub struct BanditNonStationary {
   levers : Vec<f64>,
   // Only one std, because only the means move according to
