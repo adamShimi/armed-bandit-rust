@@ -4,7 +4,7 @@ use rand::Rng;
 use rand::prelude::IteratorRandom;
 
 
-pub trait Policy {
+pub trait Policy : Clone {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
   fn decide(&self) -> usize;
@@ -14,7 +14,7 @@ pub trait Policy {
   fn update(&mut self, lever : usize, reward : f64);
 }
 
-
+#[derive(Clone)]
 pub struct EGreedy {
   nb_levers : usize,
   expl_proba : f64,
@@ -59,6 +59,7 @@ impl Policy for EGreedy {
   }
 }
 
+#[derive(Clone)]
 pub struct UCB {
   nb_levers : usize,
   time : f64,
