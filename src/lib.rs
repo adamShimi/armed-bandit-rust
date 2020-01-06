@@ -9,6 +9,24 @@ pub mod problems;
 pub mod policies;
 pub mod helper;
 
+pub fn run_experiments(experiment : Experiment,
+                      nb_tries : usize,
+                      len_exp : usize) -> Vec<usize> {
+  let exps = vec![experiment;nb_tries];
+  exps.into_iter()
+      .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
+                                acc.step();
+                                acc
+                              })
+                              .optimal_choices()
+      )
+      .fold(vec![0;len_exp],|acc,results| acc.iter()
+                                             .zip(results.iter())
+                                             .map(|(x,y)| *x+*y)
+                                             .collect()
+      )
+}
+
 #[derive(Clone)]
 pub struct Experiment {
   problem : Box<dyn problems::Bandit>,
@@ -38,11 +56,13 @@ impl Experiment {
   pub fn optimal_choices(&self) -> Vec<usize> {
     let optimals = self.problem.optimal_levers();
     self.results.iter()
-                .enumerate()
-                .filter(|(_nb,step)| {
-                  optimals.contains(&step.lever)
+                .map(|step| {
+                  if optimals.contains(&step.lever) {
+                    1
+                  } else {
+                    0
+                  }
                 })
-                .map(|(nb,_step)| nb)
                 .collect()
   }
 }
