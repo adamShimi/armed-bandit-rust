@@ -3,8 +3,9 @@ use crate::helper;
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 
+use dyn_clone::DynClone;
 
-pub trait Policy : Clone {
+pub trait Policy : DynClone {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
   fn decide(&self) -> usize;
@@ -13,6 +14,8 @@ pub trait Policy : Clone {
   // step.
   fn update(&mut self, lever : usize, reward : f64);
 }
+
+dyn_clone::clone_trait_object!(Policy);
 
 #[derive(Clone)]
 pub struct EGreedy {
