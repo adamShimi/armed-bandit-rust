@@ -3,28 +3,47 @@ extern crate rand_distr;
 extern crate dyn_clone;
 extern crate gnuplot;
 
-use gnuplot::{Figure, Caption, Color};
+use gnuplot::{Graph, Figure, Caption};
+use gnuplot::AxesCommon;
 
 pub mod problems;
 pub mod policies;
 pub mod helper;
 
 pub fn run_experiments(experiment : Experiment,
-                      nb_tries : usize,
-                      len_exp : usize) -> Vec<usize> {
+                       nb_tries : usize,
+                       len_exp : usize,
+                       filename : &str) {
   let exps = vec![experiment;nb_tries];
-  exps.into_iter()
-      .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
-                                acc.step();
-                                acc
-                              })
-                              .optimal_choices()
-      )
-      .fold(vec![0;len_exp],|acc,results| acc.iter()
-                                             .zip(results.iter())
-                                             .map(|(x,y)| *x+*y)
-                                             .collect()
-      )
+  let results : Vec<f64> =
+    exps.into_iter()
+        .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
+                                  acc.step();
+                                  acc
+                                })
+                                .optimal_choices()
+        )
+        .fold(vec![0;len_exp],|acc,results| acc.iter()
+                                               .zip(results.iter())
+                                               .map(|(x,y)| *x+*y)
+                                               .collect()
+        )
+        .into_iter()
+        .map(|x| (x as f64)/(nb_tries as f64))
+        .collect();
+
+  let mut output = Figure::new();
+  output.axes2d()
+        .set_title("Average of optimal action in function of time", &[])
+        .set_legend(Graph(0.5), Graph(0.9), &[], &[])
+        .set_x_label("x", &[])
+        .set_y_label("y^2", &[])
+        .lines(
+          &(1..=nb_tries).collect::<Vec<usize>>()[..],
+          &results[..],
+          &[Caption("Parabola")],
+        );
+  output.save_to_svg(filename,37795,18898).unwrap();
 }
 
 #[derive(Clone)]
