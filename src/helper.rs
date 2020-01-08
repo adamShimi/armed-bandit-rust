@@ -18,3 +18,13 @@ pub fn indices_max(vals : &[f64]) -> Vec<usize> {
         .1
   }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_indices_max() {
+        assert_eq!(indices_max(&(vec![0.0,1.0])[..]),vec![1]);
+    }
+}
