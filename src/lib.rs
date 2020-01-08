@@ -3,8 +3,7 @@ extern crate rand_distr;
 extern crate dyn_clone;
 extern crate gnuplot;
 
-use gnuplot::{Graph, Figure, Caption};
-use gnuplot::AxesCommon;
+use gnuplot::{Graph, Figure, Caption,AxesCommon,AutoOption};
 
 pub mod problems;
 pub mod policies;
@@ -12,8 +11,7 @@ pub mod helper;
 
 pub fn run_experiments(experiment : Experiment,
                        nb_tries : usize,
-                       len_exp : usize,
-                       filename : &str) {
+                       len_exp : usize) {
   let exps = vec![experiment;nb_tries];
   let results : Vec<f64> =
     exps.into_iter()
@@ -23,9 +21,9 @@ pub fn run_experiments(experiment : Experiment,
                                 })
                                 .optimal_choices()
         )
-        .fold(vec![0;len_exp],|acc,results| acc.iter()
+        .fold(vec![0.0;len_exp],|acc,results| acc.iter()
                                                .zip(results.iter())
-                                               .map(|(x,y)| *x+*y)
+                                               .map(|(x,y)| *x+(*y as f64))
                                                .collect()
         )
         .into_iter()
@@ -36,14 +34,15 @@ pub fn run_experiments(experiment : Experiment,
   output.axes2d()
         .set_title("Average of optimal action in function of time", &[])
         .set_legend(Graph(0.5), Graph(0.9), &[], &[])
-        .set_x_label("x", &[])
-        .set_y_label("y^2", &[])
+        .set_x_label("Time steps", &[])
+        .set_y_label("Percentage of optimal actions", &[])
+        .set_y_range(AutoOption::Fix(0.0),AutoOption::Fix(1.0))
         .lines(
-          &(1..=nb_tries).collect::<Vec<usize>>()[..],
+          &(1..=len_exp).collect::<Vec<usize>>()[..],
           &results[..],
           &[Caption("Parabola")],
         );
-  output.save_to_svg(filename,37795,18898).unwrap();
+  output.show().unwrap();
 }
 
 #[derive(Clone)]
