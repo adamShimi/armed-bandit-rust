@@ -4,17 +4,13 @@ use rand_distr::{Normal, Distribution};
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-use dyn_clone::DynClone;
-
-pub trait Bandit : DynClone {
+pub trait Bandit : Clone {
   // Get reward from a lever.
   fn use_lever(&mut self, lever : usize) -> f64;
 
   // Get set of optimal levers.
   fn optimal_levers(&self) -> HashSet<usize>;
 }
-
-dyn_clone::clone_trait_object!(Bandit);
 
 // Implementatio of a stationary bandit instance, where
 // nb_levers levers are initialized at according to a normal distribution.

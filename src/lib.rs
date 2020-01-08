@@ -1,6 +1,5 @@
 extern crate rand;
 extern crate rand_distr;
-extern crate dyn_clone;
 extern crate gnuplot;
 
 use gnuplot::{Graph, Figure, Caption,AxesCommon,AutoOption};
@@ -9,9 +8,11 @@ pub mod problems;
 pub mod policies;
 pub mod helper;
 
-pub fn run_experiments(experiment : Experiment,
-                       nb_tries : usize,
-                       len_exp : usize) {
+pub fn run_experiments<T,U>(experiment : Experiment<T,U>,
+                            nb_tries : usize,
+                            len_exp : usize)
+  where T : problems::Bandit + Clone,
+        U : policies::Policy + Clone {
   let exps = vec![experiment;nb_tries];
   let results : Vec<f64> =
     exps.into_iter()
@@ -46,16 +47,20 @@ pub fn run_experiments(experiment : Experiment,
 }
 
 #[derive(Clone)]
-pub struct Experiment {
-  problem : Box<dyn problems::Bandit>,
-  policy : Box<dyn policies::Policy>,
+pub struct Experiment<T,U>
+  where T : problems::Bandit + Clone,
+        U : policies::Policy + Clone {
+  problem : T,
+  policy : U,
   results : Vec<Step>,
 }
 
-impl Experiment {
+impl<T,U> Experiment<T,U>
+  where T : problems::Bandit + Clone,
+        U : policies::Policy + Clone {
 
-  pub fn new(problem : Box<dyn problems::Bandit>,
-             policy : Box<dyn policies::Policy>) -> Self {
+  pub fn new(problem : T,
+             policy : U) -> Self {
     Experiment {
       problem,
       policy,

@@ -3,9 +3,7 @@ use crate::helper;
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 
-use dyn_clone::DynClone;
-
-pub trait Policy : DynClone {
+pub trait Policy : Clone {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
   fn decide(&self) -> usize;
@@ -15,20 +13,18 @@ pub trait Policy : DynClone {
   fn update(&mut self, lever : usize, reward : f64);
 }
 
-dyn_clone::clone_trait_object!(Policy);
-
 #[derive(Clone)]
-pub struct EGreedy {
+pub struct EGreedy<T : estimators::Estimator + Clone> {
   nb_levers : usize,
   expl_proba : f64,
-  estimator : Box<dyn estimators::Estimator>,
+  estimator : T,
 }
 
-impl EGreedy {
+impl<T : estimators::Estimator + Clone> EGreedy<T> {
 
   pub fn new(nb_levers : usize,
              expl_proba: f64,
-             estimator : Box<dyn estimators::Estimator>) -> Self {
+             estimator : T) -> Self {
     EGreedy {
       nb_levers,
       expl_proba,
@@ -42,7 +38,7 @@ impl EGreedy {
   }
 }
 
-impl Policy for EGreedy {
+impl<T : estimators::Estimator + Clone> Policy for EGreedy<T> {
 
   fn decide(&self) -> usize {
     if rand::thread_rng().gen_bool(self.expl_proba) {
@@ -63,16 +59,16 @@ impl Policy for EGreedy {
 }
 
 #[derive(Clone)]
-pub struct UCB {
+pub struct UCB<T : estimators::Estimator + Clone> {
   nb_levers : usize,
   time : f64,
   counts : Vec<f64>,
-  estimator : Box<dyn estimators::Estimator>,
+  estimator : T,
 }
 
-impl UCB {
+impl<T : estimators::Estimator + Clone> UCB<T> {
 
-  pub fn new(nb_levers : usize, estimator : Box<dyn estimators::Estimator>) -> Self {
+  pub fn new(nb_levers : usize, estimator : T) -> Self {
     UCB {
       nb_levers,
       time : 0.0,
@@ -82,7 +78,7 @@ impl UCB {
   }
 }
 
-impl Policy for UCB {
+impl<T : estimators::Estimator + Clone> Policy for UCB<T> {
 
   fn decide(&self) -> usize {
     let est_counts : Vec<f64> =
@@ -108,9 +104,7 @@ pub mod estimators {
 
   use crate::helper;
 
-  use dyn_clone::DynClone;
-
-  pub trait Estimator : DynClone {
+  pub trait Estimator : Clone {
     // Give the current estimate of the required lever.
     fn estimate(&self, lever : usize) -> f64;
 
@@ -129,8 +123,6 @@ pub mod estimators {
       helper::indices_max(&self.all(nb_levers))
     }
   }
-
-  dyn_clone::clone_trait_object!(Estimator);
 
   #[derive(Clone)]
   pub struct SampleAverage {
