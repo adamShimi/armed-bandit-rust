@@ -134,7 +134,7 @@ pub mod estimators {
 
   #[derive(Clone)]
   pub struct SampleAverage {
-    pub counter : f64,
+    pub counter : Vec<f64>,
     pub estimates : Vec<f64>,
   }
 
@@ -142,7 +142,7 @@ pub mod estimators {
 
     pub fn new(nb_levers : usize) -> Self {
       SampleAverage {
-        counter : 1.0,
+        counter : vec![1.0;nb_levers],
         estimates : vec![0.0;nb_levers],
       }
     }
@@ -156,8 +156,8 @@ pub mod estimators {
 
     fn update(&mut self, lever : usize, reward : f64) {
       self.estimates[lever] =
-        self.estimates[lever] + (reward - self.estimates[lever])/self.counter;
-      self.counter += 1.0;
+        self.estimates[lever] + (reward - self.estimates[lever])/self.counter[lever];
+      self.counter[lever] += 1.0;
     }
   }
 
