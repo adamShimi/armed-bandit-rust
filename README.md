@@ -12,4 +12,6 @@ and applying reinforcement learning techniques to it.
 * ~~Remove the explore from Bandit trait.~~ Done
 * ~~Write a function for running such learning algorithm on an instance.~~ Done
 * ~~Write an evaluation function and a corresponding datatype.~~ Done
-* Return plots for an experiment.
+* ~~Return plots for an experiment.~~ Done
+* Return multiple plots for multiple experiments.
+* Parallelize the fuck out of it.
