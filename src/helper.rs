@@ -6,11 +6,11 @@ pub fn indices_max(vals : &[f64]) -> Vec<usize> {
         .enumerate()
         .fold((vals[0],Vec::new()),
               |(mut max,mut occs), (nb,est)| {
-                if *est > max {
+                if (*est-max) <= std::f64::EPSILON {
+                  occs.push(nb);
+                } else if *est > max {
                   max = *est;
                   occs.clear();
-                  occs.push(nb);
-                } else if *est == max {
                   occs.push(nb);
                 }
                 (max,occs)
