@@ -20,11 +20,14 @@ pub fn run_experiments<T,U>(experiment : Experiment<T,U>,
                                   acc.step();
                                   acc
                                 })
-                                .optimal_choices()
+                                .get_results()
+                                .iter()
+                                .map(|x| if x.optimal {1.0} else {0.0})
+                                .collect::<Vec<f64>>()
         )
         .fold(vec![0.0;len_exp],|acc,results| acc.iter()
                                                .zip(results.iter())
-                                               .map(|(x,y)| *x+(*y as f64))
+                                               .map(|(x,y)| *x+*y)
                                                .collect()
         )
         .into_iter()
@@ -68,31 +71,24 @@ impl<T,U> Experiment<T,U>
     }
   }
 
+  pub fn get_results(&self) -> &[Step] {
+    &self.results
+  }
+
   pub fn step(&mut self) {
     let lever = self.policy.decide();
+    let optimal = self.problem.is_optimal(lever);
     let reward = self.problem.use_lever(lever);
     self.policy.update(lever,reward);
-    self.results.push(Step { lever, reward, });
+    self.results.push(Step { lever, optimal, reward, });
   }
 
-
-  pub fn optimal_choices(&self) -> Vec<usize> {
-    let optimals = self.problem.optimal_levers();
-    self.results.iter()
-                .map(|step| {
-                  if optimals.contains(&step.lever) {
-                    1
-                  } else {
-                    0
-                  }
-                })
-                .collect()
-  }
 }
 
 #[derive(Clone)]
 pub struct Step {
   pub lever : usize,
+  pub optimal : bool,
   pub reward : f64,
 }
 

@@ -9,7 +9,7 @@ pub trait Bandit : Clone {
   fn use_lever(&mut self, lever : usize) -> f64;
 
   // Get set of optimal levers.
-  fn optimal_levers(&self) -> HashSet<usize>;
+  fn is_optimal(&self, lever : usize) -> bool;
 }
 
 // Implementatio of a stationary bandit instance, where
@@ -43,8 +43,8 @@ impl Bandit for BanditStationary {
     self.levers[lever].sample(&mut rand::thread_rng())
   }
 
-  fn optimal_levers(&self) -> HashSet<usize> {
-    self.optimals.clone()
+  fn is_optimal(&self, lever : usize) -> bool {
+    self.optimals.contains(&lever)
   }
 
 }
@@ -99,8 +99,8 @@ impl Bandit for BanditNonStationary {
 
   }
 
-  fn optimal_levers(&self) -> HashSet<usize> {
-    self.optimals.clone()
+  fn is_optimal(&self, lever : usize) -> bool {
+    self.optimals.contains(&lever)
   }
 
 }
