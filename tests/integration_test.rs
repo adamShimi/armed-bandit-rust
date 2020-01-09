@@ -2,12 +2,18 @@ use bandit_rs;
 use bandit_rs::{policies,problems};
 use policies::estimators;
 
+const NB_LEVERS:usize = 10;
+const EPS:f64 = 0.1;
+const NB_TRIES:usize = 2000;
+const LEN_EXP:usize = 2000;
+const GAUSS:(f64,f64) = (0.0,1.0);
+
 #[test]
 fn experiment() {
-  let nb_levers = 10;
-  let est = estimators::SampleAverage::new(nb_levers);
-  let policy = policies::EGreedy::new(nb_levers,0.1,est);
-  let problem = problems::BanditStationary::new(nb_levers,(0.0,1.0));
+  let est = estimators::SampleAverage::new(NB_LEVERS);
+  let policy = policies::EGreedy::new(NB_LEVERS,EPS,est);
+  let problem = problems::BanditStationary::new(NB_LEVERS,GAUSS);
   let experiment = bandit_rs::Experiment::new(problem,policy);
-  bandit_rs::run_experiments(experiment,2000,1000);
+  let results = bandit_rs::run_experiments(experiment,NB_TRIES,LEN_EXP);
+  bandit_rs::plot_optimal_percentage(results,NB_TRIES,LEN_EXP);
 }
