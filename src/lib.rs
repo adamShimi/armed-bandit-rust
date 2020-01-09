@@ -8,7 +8,7 @@ pub mod problems;
 pub mod policies;
 pub mod helper;
 
-pub fn run_experiments<T,U>(experiment : Experiment<T,U>,
+pub fn run_experiment<T,U>(experiment : Experiment<T,U>,
                             nb_tries : usize,
                             len_exp : usize) -> Vec<Vec<Step>>
   where T : problems::Bandit + Clone,

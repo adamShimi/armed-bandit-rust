@@ -14,6 +14,6 @@ fn experiment() {
   let policy = policies::EGreedy::new(NB_LEVERS,EPS,est);
   let problem = problems::BanditStationary::new(NB_LEVERS,GAUSS);
   let experiment = bandit_rs::Experiment::new(problem,policy);
-  let results = bandit_rs::run_experiments(experiment,NB_TRIES,LEN_EXP);
+  let results = bandit_rs::run_experiment(experiment,NB_TRIES,LEN_EXP);
   bandit_rs::plot_optimal_percentage(results,NB_TRIES,LEN_EXP);
 }
