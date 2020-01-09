@@ -1,7 +1,9 @@
 extern crate rand;
 extern crate rand_distr;
+extern crate rayon;
 extern crate gnuplot;
 
+use rayon::prelude::*;
 use gnuplot::{Graph, Figure, Caption,AxesCommon,AutoOption};
 
 pub mod problems;
@@ -11,11 +13,11 @@ pub mod helper;
 pub fn run_experiment<T,U>(experiment : Experiment<T,U>,
                             nb_tries : usize,
                             len_exp : usize) -> Vec<Vec<Step>>
-  where T : problems::Bandit + Clone,
-        U : policies::Policy + Clone {
+  where T : problems::Bandit + Clone + Send,
+        U : policies::Policy + Clone + Send {
 
   let exps = vec![experiment;nb_tries];
-  exps.into_iter()
+  exps.into_par_iter()
       .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
                                   acc.step();
                                   acc
@@ -58,16 +60,16 @@ pub fn plot_optimal_percentage(results : Vec<Vec<Step>>,
 
 #[derive(Clone)]
 pub struct Experiment<T,U>
-  where T : problems::Bandit + Clone,
-        U : policies::Policy + Clone {
+  where T : problems::Bandit + Clone + Send,
+        U : policies::Policy + Clone + Send {
   problem : T,
   policy : U,
   results : Vec<Step>,
 }
 
 impl<T,U> Experiment<T,U>
-  where T : problems::Bandit + Clone,
-        U : policies::Policy + Clone {
+  where T : problems::Bandit + Clone + Send,
+        U : policies::Policy + Clone + Send {
 
   pub fn new(problem : T,
              policy : U) -> Self {
