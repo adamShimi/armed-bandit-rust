@@ -13,8 +13,8 @@ pub mod helper;
 pub fn run_experiment<T,U>(experiment : Experiment<T,U>,
                             nb_tries : usize,
                             len_exp : usize) -> Vec<Vec<Step>>
-  where T : problems::Bandit + Clone + Send,
-        U : policies::Policy + Clone + Send {
+  where T : problems::Bandit,
+        U : policies::Policy {
 
   let exps = vec![experiment;nb_tries];
   exps.into_par_iter()
@@ -60,16 +60,16 @@ pub fn plot_optimal_percentage(results : Vec<Vec<Step>>,
 
 #[derive(Clone)]
 pub struct Experiment<T,U>
-  where T : problems::Bandit + Clone + Send,
-        U : policies::Policy + Clone + Send {
+  where T : problems::Bandit,
+        U : policies::Policy {
   problem : T,
   policy : U,
   results : Vec<Step>,
 }
 
 impl<T,U> Experiment<T,U>
-  where T : problems::Bandit + Clone + Send,
-        U : policies::Policy + Clone + Send {
+  where T : problems::Bandit,
+        U : policies::Policy {
 
   pub fn new(problem : T,
              policy : U) -> Self {

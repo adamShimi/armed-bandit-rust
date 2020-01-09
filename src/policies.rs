@@ -3,7 +3,7 @@ use crate::helper;
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 
-pub trait Policy : Clone {
+pub trait Policy : Clone + Send {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
   fn decide(&self) -> usize;
@@ -59,14 +59,14 @@ impl<T : estimators::Estimator + Clone> Policy for EGreedy<T> {
 }
 
 #[derive(Clone)]
-pub struct UCB<T : estimators::Estimator + Clone> {
+pub struct UCB<T : estimators::Estimator> {
   nb_levers : usize,
   time : f64,
   counts : Vec<f64>,
   estimator : T,
 }
 
-impl<T : estimators::Estimator + Clone> UCB<T> {
+impl<T : estimators::Estimator> UCB<T> {
 
   pub fn new(nb_levers : usize, estimator : T) -> Self {
     UCB {
@@ -78,7 +78,7 @@ impl<T : estimators::Estimator + Clone> UCB<T> {
   }
 }
 
-impl<T : estimators::Estimator + Clone> Policy for UCB<T> {
+impl<T : estimators::Estimator> Policy for UCB<T> {
 
   fn decide(&self) -> usize {
     let est_counts : Vec<f64> =
@@ -104,7 +104,7 @@ pub mod estimators {
 
   use crate::helper;
 
-  pub trait Estimator : Clone {
+  pub trait Estimator : Clone + Send {
     // Give the current estimate of the required lever.
     fn estimate(&self, lever : usize) -> f64;
 

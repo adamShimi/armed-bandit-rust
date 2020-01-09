@@ -4,7 +4,7 @@ use rand_distr::{Normal, Distribution};
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-pub trait Bandit : Clone {
+pub trait Bandit : Clone + Send {
   // Get reward from a lever.
   fn use_lever(&mut self, lever : usize) -> f64;
 
