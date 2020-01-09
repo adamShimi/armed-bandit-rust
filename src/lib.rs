@@ -27,34 +27,40 @@ pub fn run_experiment<T,U>(experiment : Experiment<T,U>,
       .collect()
 }
 
-pub fn plot_optimal_percentage(results : Vec<Vec<Step>>,
-                               nb_tries : usize,
-                               len_exp : usize) {
+pub fn optimal_percentage(results : Vec<Vec<Step>>,
+                          nb_tries : usize,
+                          len_exp : usize) -> Vec<f64> {
+  results.iter()
+         .fold(vec![0.0;len_exp],|acc,results|
+           acc.iter()
+              .zip(results.iter())
+              .map(|(acc_val,step)| *acc_val+((step.optimal as usize) as f64))
+              .collect()
+         )
+         .into_iter()
+         .map(|x| x/(nb_tries as f64))
+         .collect()
+}
 
-  let data : Vec<f64> =
-    results.iter()
-           .fold(vec![0.0;len_exp],|acc,results|
-             acc.iter()
-                .zip(results.iter())
-                .map(|(acc_val,step)| *acc_val+((step.optimal as usize) as f64))
-                .collect()
-           )
-           .into_iter()
-           .map(|x| x/(nb_tries as f64))
-           .collect();
+pub fn plot_results(results : Vec<(&str,Vec<f64>)>,
+                    len_exp : usize) {
 
   let mut output = Figure::new();
-  output.axes2d()
-        .set_title("Average of optimal action in function of time", &[])
-        .set_legend(Graph(0.5), Graph(0.9), &[], &[])
-        .set_x_label("Time steps", &[])
-        .set_y_label("Percentage of optimal actions", &[])
-        .set_y_range(AutoOption::Fix(0.0),AutoOption::Fix(1.0))
-        .lines(
-          &(1..=len_exp).collect::<Vec<usize>>()[..],
-          &data[..],
-          &[Caption("Parabola")],
-        );
+  let axes =
+    output.axes2d()
+          .set_title("Average of optimal action in function of time", &[])
+          .set_legend(Graph(0.5), Graph(0.9), &[], &[])
+          .set_x_label("Time steps", &[])
+          .set_y_label("Percentage of optimal actions", &[])
+          .set_y_range(AutoOption::Fix(0.0),AutoOption::Fix(1.0));
+
+  let time_steps : &[usize] = &(1..=len_exp).collect::<Vec<usize>>();
+  for (name,vals) in results.iter() {
+    axes.lines(time_steps,
+              &vals[..],
+              &[Caption(name)],
+    );
+  }
   output.show().unwrap();
 }
 
