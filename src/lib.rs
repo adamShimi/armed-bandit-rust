@@ -4,27 +4,46 @@ extern crate rayon;
 extern crate gnuplot;
 
 use rayon::prelude::*;
+use std::iter::once;
 use gnuplot::{Graph, Figure, Caption,AxesCommon,AutoOption};
 
 pub mod problems;
 pub mod policies;
 pub mod helper;
 
-pub fn run_experiment<T,U>(experiment : Experiment<T,U>,
-                            nb_tries : usize,
-                            len_exp : usize) -> Vec<Vec<Step>>
+pub fn run_experiment<T,U>(policies : Vec<U>,
+                           problems : Vec<T>,
+                           nb_tries : usize,
+                           len_exp : usize) -> Vec<Vec<Vec<Step>>>
   where T : problems::Bandit,
         U : policies::Policy {
 
-  let exps = vec![experiment;nb_tries];
-  exps.into_par_iter()
-      .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
-                                  acc.step();
-                                  acc
-                             })
-                             .get_results()
-      )
-      .collect()
+  let all_exps : Vec<Vec<(U,T)>> =
+    policies.into_iter()
+            .map(|x| once(x).cycle()
+                            .take(nb_tries)
+                            .zip(problems.clone()
+                                        .into_iter()
+                            )
+                            .collect::<Vec<(U,T)>>()
+            )
+            .collect();
+  all_exps.into_par_iter()
+          .map(|exps|
+            exps.into_par_iter()
+                .map(|(policy, problem)| {
+                  let exp = Experiment::new(problem.clone(),
+                                            policy.clone());
+                  (0..len_exp).fold(exp,|mut acc,_| {
+                                 acc.step();
+                                 acc
+                              })
+                              .get_results()
+                })
+                .collect::<Vec<Vec<Step>>>()
+          )
+          .collect()
+
 }
 
 pub fn optimal_percentage(results : Vec<Vec<Step>>,
