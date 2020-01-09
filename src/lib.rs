@@ -10,29 +10,36 @@ pub mod helper;
 
 pub fn run_experiments<T,U>(experiment : Experiment<T,U>,
                             nb_tries : usize,
-                            len_exp : usize)
+                            len_exp : usize) -> Vec<Vec<Step>>
   where T : problems::Bandit + Clone,
         U : policies::Policy + Clone {
+
   let exps = vec![experiment;nb_tries];
-  let results : Vec<f64> =
-    exps.into_iter()
-        .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
+  exps.into_iter()
+      .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
                                   acc.step();
                                   acc
-                                })
-                                .get_results()
-                                .iter()
-                                .map(|x| if x.optimal {1.0} else {0.0})
-                                .collect::<Vec<f64>>()
-        )
-        .fold(vec![0.0;len_exp],|acc,results| acc.iter()
-                                               .zip(results.iter())
-                                               .map(|(x,y)| *x+*y)
-                                               .collect()
-        )
-        .into_iter()
-        .map(|x| (x as f64)/(nb_tries as f64))
-        .collect();
+                             })
+                             .get_results()
+      )
+      .collect()
+}
+
+pub fn plot_optimal_percentage(results : Vec<Vec<Step>>,
+                               nb_tries : usize,
+                               len_exp : usize) {
+
+  let data : Vec<f64> =
+    results.iter()
+           .fold(vec![0.0;len_exp],|acc,results|
+             acc.iter()
+                .zip(results.iter())
+                .map(|(acc_val,step)| *acc_val+((step.optimal as usize) as f64))
+                .collect()
+           )
+           .into_iter()
+           .map(|x| x/(nb_tries as f64))
+           .collect();
 
   let mut output = Figure::new();
   output.axes2d()
@@ -43,7 +50,7 @@ pub fn run_experiments<T,U>(experiment : Experiment<T,U>,
         .set_y_range(AutoOption::Fix(0.0),AutoOption::Fix(1.0))
         .lines(
           &(1..=len_exp).collect::<Vec<usize>>()[..],
-          &results[..],
+          &data[..],
           &[Caption("Parabola")],
         );
   output.show().unwrap();
@@ -71,8 +78,8 @@ impl<T,U> Experiment<T,U>
     }
   }
 
-  pub fn get_results(&self) -> &[Step] {
-    &self.results
+  pub fn get_results(self) -> Vec<Step> {
+    self.results
   }
 
   pub fn step(&mut self) {
