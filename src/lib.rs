@@ -46,18 +46,21 @@ pub fn run_experiment<T,U>(policies : Vec<U>,
 
 }
 
-pub fn optimal_percentage(results : Vec<Vec<Step>>,
+pub fn optimal_percentage(results : Vec<Vec<Vec<Step>>>,
                           nb_tries : usize,
-                          len_exp : usize) -> Vec<f64> {
+                          len_exp : usize) -> Vec<Vec<f64>> {
   results.iter()
-         .fold(vec![0.0;len_exp],|acc,results|
-           acc.iter()
-              .zip(results.iter())
-              .map(|(acc_val,step)| *acc_val+((step.optimal as usize) as f64))
-              .collect()
+         .map(|exps| exps.iter()
+                         .fold(vec![0.0;len_exp],|acc,results|
+                            acc.iter()
+                               .zip(results.iter())
+                               .map(|(acc_val,step)| *acc_val+((step.optimal as usize) as f64))
+                               .collect()
+                         )
+                         .into_iter()
+                         .map(|x| x/(nb_tries as f64))
+                         .collect()
          )
-         .into_iter()
-         .map(|x| x/(nb_tries as f64))
          .collect()
 }
 
