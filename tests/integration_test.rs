@@ -27,10 +27,9 @@ fn experiment() {
   policies.push(policies::EGreedy::new(NB_LEVERS,EPS3,est.clone()));
 
   let results : Vec<Vec<f64>> =
-    bandit_rs::run_experiment(policies,problems,NB_TRIES,LEN_EXP)
-              .into_iter()
-              .map(|result| bandit_rs::optimal_percentage(result,NB_TRIES,LEN_EXP))
-              .collect();
+    bandit_rs::optimal_percentage(bandit_rs::run_experiment(policies,problems,NB_TRIES,LEN_EXP),
+                                  NB_TRIES,
+                                  LEN_EXP);
 
   let mut names = Vec::new();
   names.push(NAME);
