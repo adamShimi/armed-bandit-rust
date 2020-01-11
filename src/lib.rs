@@ -24,15 +24,12 @@ pub fn run_experiments<T,U>(policies : Vec<U>,
     .into_par_iter()
     .map(|exps|
       exps.into_par_iter()
-          .map(|(policy, problem)| {
-            let exp = Experiment::new(problem.clone(),
-                                      policy.clone());
-            (0..len_exp).fold(exp,|mut acc,_| {
-                             acc.step(&mut rand::thread_rng());
-                             acc
-                          })
-                          .get_results()
-          })
+          .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
+                                   acc.step(&mut rand::thread_rng());
+                                   acc
+                                 })
+                                 .get_results()
+          )
           .collect::<Vec<Vec<Step>>>()
     )
     .collect()
@@ -51,15 +48,12 @@ pub fn run_reprod_experiments<T,U,V> (policies : Vec<U>,
     .into_iter()
     .map(|exps|
       exps.into_iter()
-          .map(|(policy, problem)| {
-            let exp = Experiment::new(problem.clone(),
-                                      policy.clone());
-            (0..len_exp).fold(exp,|mut acc,_| {
-                             acc.step(rng);
-                             acc
-                          })
-                          .get_results()
-          })
+          .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
+                                   acc.step(rng);
+                                   acc
+                                 })
+                                 .get_results()
+          )
           .collect::<Vec<Vec<Step>>>()
     )
     .collect()
@@ -67,7 +61,7 @@ pub fn run_reprod_experiments<T,U,V> (policies : Vec<U>,
 
 fn make_vec_experiment<T,U>(policies : Vec<U>,
                             problems : Vec<T>,
-                            nb_tries : usize) -> Vec<Vec<(U,T)>>
+                            nb_tries : usize) -> Vec<Vec<Experiment<T,U>>>
   where T : problems::Bandit,
         U : policies::Policy {
 
@@ -77,7 +71,11 @@ fn make_vec_experiment<T,U>(policies : Vec<U>,
                           .zip(problems.clone()
                                       .into_iter()
                           )
-                          .collect::<Vec<(U,T)>>()
+                          .map(|(policy,problem)|
+                            Experiment::new(problem.clone(),
+                                            policy.clone())
+                          )
+                          .collect::<Vec<Experiment<T,U>>>()
           )
           .collect()
 }
