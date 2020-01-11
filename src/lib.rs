@@ -24,11 +24,7 @@ pub fn run_experiments<T,U>(policies : Vec<U>,
     .into_par_iter()
     .map(|exps|
       exps.into_par_iter()
-          .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
-                                   acc.step(&mut rand::thread_rng());
-                                   acc
-                                 })
-                                 .get_results()
+          .map(|exp| exp.steps(len_exp, &mut rand::thread_rng())
           )
           .collect::<Vec<Vec<Step>>>()
     )
@@ -48,12 +44,7 @@ pub fn run_reprod_experiments<T,U,V> (policies : Vec<U>,
     .into_iter()
     .map(|exps|
       exps.into_iter()
-          .map(|exp| (0..len_exp).fold(exp,|mut acc,_| {
-                                   acc.step(rng);
-                                   acc
-                                 })
-                                 .get_results()
-          )
+          .map(|exp| exp.steps(len_exp, rng))
           .collect::<Vec<Vec<Step>>>()
     )
     .collect()
@@ -142,19 +133,16 @@ impl<T,U> Experiment<T,U>
     }
   }
 
-  pub fn step<V: Rng>(&mut self, rng : &mut V) {
-    let lever = self.policy.decide(rng);
-    let optimal = self.problem.is_optimal(lever);
-    let reward = self.problem.use_lever(lever,rng);
-    self.policy.update(lever,reward);
-    self.results.push(Step { lever, optimal, reward, });
-  }
-
-  pub fn get_results(self) -> Vec<Step> {
+  pub fn steps<V: Rng>(mut self, steps : usize, rng : &mut V) -> Vec<Step> {
+    for _ in 0..steps {
+      let lever = self.policy.decide(rng);
+      let optimal = self.problem.is_optimal(lever);
+      let reward = self.problem.use_lever(lever,rng);
+      self.policy.update(lever,reward);
+      self.results.push(Step { lever, optimal, reward, });
+    }
     self.results
   }
-
-
 }
 
 #[derive(Clone)]
