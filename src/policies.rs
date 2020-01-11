@@ -6,7 +6,7 @@ use rand::prelude::IteratorRandom;
 pub trait Policy : Clone + Send {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
-  fn decide(&self) -> usize;
+  fn decide<V: Rng>(&self, rng: &mut V) -> usize;
 
   // Update its values based on the result of the
   // step.
@@ -33,20 +33,20 @@ impl<T : estimators::Estimator + Clone> EGreedy<T> {
   }
 
 
-  fn explore(&self) -> usize {
-    rand::thread_rng().gen_range(0,self.nb_levers)
+  fn explore<V: Rng>(&self, rng : &mut V) -> usize {
+    rng.gen_range(0,self.nb_levers)
   }
 }
 
 impl<T : estimators::Estimator + Clone> Policy for EGreedy<T> {
 
-  fn decide(&self) -> usize {
-    if rand::thread_rng().gen_bool(self.expl_proba) {
-      self.explore()
+  fn decide<V: Rng>(&self, rng: &mut V) -> usize {
+    if rng.gen_bool(self.expl_proba) {
+      self.explore(rng)
     } else {
       *self.estimator.optimal(self.nb_levers)
                      .iter()
-                     .choose(&mut rand::thread_rng())
+                     .choose(rng)
                      .unwrap()
     }
   }
@@ -80,7 +80,7 @@ impl<T : estimators::Estimator> UCB<T> {
 
 impl<T : estimators::Estimator> Policy for UCB<T> {
 
-  fn decide(&self) -> usize {
+  fn decide<V: Rng>(&self, rng: &mut V) -> usize {
     let est_counts : Vec<f64> =
       self.estimator.all(self.nb_levers)
                     .iter()
@@ -89,7 +89,7 @@ impl<T : estimators::Estimator> Policy for UCB<T> {
                     .collect();
     *helper::indices_max(&est_counts)
             .iter()
-            .choose(&mut rand::thread_rng())
+            .choose(rng)
             .unwrap()
   }
 

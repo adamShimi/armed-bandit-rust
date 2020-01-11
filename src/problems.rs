@@ -1,12 +1,14 @@
 use crate::helper;
 
-use rand_distr::{Normal, Distribution};
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
+use rand::Rng;
+use rand_distr::{Normal, Distribution};
+
 pub trait Bandit : Clone + Send {
   // Get reward from a lever.
-  fn use_lever(&mut self, lever : usize) -> f64;
+  fn use_lever<T: Rng>(&mut self, lever : usize, rng: &mut T) -> f64;
 
   // Get set of optimal levers.
   fn is_optimal(&self, lever : usize) -> bool;
@@ -22,11 +24,11 @@ pub struct BanditStationary {
 
 impl BanditStationary {
 
-  pub fn new(nb_levers : usize, init : (f64,f64)) -> Self {
+  pub fn new<T: Rng>(nb_levers : usize, init : (f64,f64),rng : &mut T) -> Self {
     let init_distrib = Normal::new(init.0,init.1).unwrap();
     let (levers,optimals) : (Vec<Normal<f64>>,Vec<f64>) =
       (0..nb_levers).map(|_| {
-                      let mean = init_distrib.sample(&mut rand::thread_rng());
+                      let mean = init_distrib.sample(rng);
                       (Normal::new(mean, init.1).unwrap(),mean)
                     })
                     .unzip();
@@ -39,8 +41,8 @@ impl BanditStationary {
 
 impl Bandit for BanditStationary {
 
-  fn use_lever(&mut self, lever: usize) -> f64 {
-    self.levers[lever].sample(&mut rand::thread_rng())
+  fn use_lever<T: Rng>(&mut self, lever: usize, rng: &mut T) -> f64 {
+    self.levers[lever].sample(rng)
   }
 
   fn is_optimal(&self, lever : usize) -> bool {
@@ -77,11 +79,11 @@ impl BanditNonStationary {
     }
   }
 
-  fn update(&mut self) {
+  fn update<T: Rng>(&mut self, rng : &mut T) {
     self.levers =
       self.levers.iter()
            .zip(self.walks.iter())
-           .map(|(lever,walk)| lever + walk.sample(&mut rand::thread_rng()))
+           .map(|(lever,walk)| lever + walk.sample(rng))
            .collect();
     self.optimals.clear();
     self.optimals = HashSet::from_iter(helper::indices_max(&self.levers));
@@ -90,11 +92,11 @@ impl BanditNonStationary {
 
 impl Bandit for BanditNonStationary {
 
-  fn use_lever(&mut self, lever: usize) -> f64 {
+  fn use_lever<T: Rng>(&mut self, lever: usize, rng: &mut T) -> f64 {
     let result = Normal::new(self.levers[lever],self.std)
              .unwrap()
-             .sample(&mut rand::thread_rng());
-    self.update();
+             .sample(rng);
+    self.update(rng);
     result
 
   }

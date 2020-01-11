@@ -5,6 +5,7 @@ extern crate gnuplot;
 
 use std::iter::once;
 
+use rand::Rng;
 use rayon::prelude::*;
 use gnuplot::{Graph, Figure, Caption,AxesCommon,AutoOption};
 
@@ -12,39 +13,73 @@ pub mod problems;
 pub mod policies;
 pub mod helper;
 
-pub fn run_experiment<T,U>(policies : Vec<U>,
-                           problems : Vec<T>,
-                           nb_tries : usize,
-                           len_exp : usize) -> Vec<Vec<Vec<Step>>>
+pub fn run_experiments<T,U>(policies : Vec<U>,
+                            problems : Vec<T>,
+                            nb_tries : usize,
+                            len_exp : usize) -> Vec<Vec<Vec<Step>>>
   where T : problems::Bandit,
         U : policies::Policy {
 
-  let all_exps : Vec<Vec<(U,T)>> =
-    policies.into_iter()
-            .map(|x| once(x).cycle()
-                            .take(nb_tries)
-                            .zip(problems.clone()
-                                        .into_iter()
-                            )
-                            .collect::<Vec<(U,T)>>()
-            )
-            .collect();
-  all_exps.into_par_iter()
-          .map(|exps|
-            exps.into_par_iter()
-                .map(|(policy, problem)| {
-                  let exp = Experiment::new(problem.clone(),
-                                            policy.clone());
-                  (0..len_exp).fold(exp,|mut acc,_| {
-                                 acc.step();
-                                 acc
-                              })
-                              .get_results()
-                })
-                .collect::<Vec<Vec<Step>>>()
+  make_vec_experiment(policies,problems,nb_tries)
+    .into_par_iter()
+    .map(|exps|
+      exps.into_par_iter()
+          .map(|(policy, problem)| {
+            let exp = Experiment::new(problem.clone(),
+                                      policy.clone());
+            (0..len_exp).fold(exp,|mut acc,_| {
+                             acc.step(&mut rand::thread_rng());
+                             acc
+                          })
+                          .get_results()
+          })
+          .collect::<Vec<Vec<Step>>>()
+    )
+    .collect()
+}
+
+pub fn run_reprod_experiments<T,U,V> (policies : Vec<U>,
+                                    problems : Vec<T>,
+                                    rng : &mut V,
+                                    nb_tries : usize,
+                                    len_exp : usize) -> Vec<Vec<Vec<Step>>>
+  where T : problems::Bandit,
+        U : policies::Policy,
+        V : Rng {
+
+  make_vec_experiment(policies,problems,nb_tries)
+    .into_iter()
+    .map(|exps|
+      exps.into_iter()
+          .map(|(policy, problem)| {
+            let exp = Experiment::new(problem.clone(),
+                                      policy.clone());
+            (0..len_exp).fold(exp,|mut acc,_| {
+                             acc.step(rng);
+                             acc
+                          })
+                          .get_results()
+          })
+          .collect::<Vec<Vec<Step>>>()
+    )
+    .collect()
+}
+
+fn make_vec_experiment<T,U>(policies : Vec<U>,
+                            problems : Vec<T>,
+                            nb_tries : usize) -> Vec<Vec<(U,T)>>
+  where T : problems::Bandit,
+        U : policies::Policy {
+
+  policies.into_iter()
+          .map(|x| once(x).cycle()
+                          .take(nb_tries)
+                          .zip(problems.clone()
+                                      .into_iter()
+                          )
+                          .collect::<Vec<(U,T)>>()
           )
           .collect()
-
 }
 
 pub fn optimal_percentage(results : Vec<Vec<Vec<Step>>>,
@@ -109,17 +144,18 @@ impl<T,U> Experiment<T,U>
     }
   }
 
+  pub fn step<V: Rng>(&mut self, rng : &mut V) {
+    let lever = self.policy.decide(rng);
+    let optimal = self.problem.is_optimal(lever);
+    let reward = self.problem.use_lever(lever,rng);
+    self.policy.update(lever,reward);
+    self.results.push(Step { lever, optimal, reward, });
+  }
+
   pub fn get_results(self) -> Vec<Step> {
     self.results
   }
 
-  pub fn step(&mut self) {
-    let lever = self.policy.decide();
-    let optimal = self.problem.is_optimal(lever);
-    let reward = self.problem.use_lever(lever);
-    self.policy.update(lever,reward);
-    self.results.push(Step { lever, optimal, reward, });
-  }
 
 }
 
