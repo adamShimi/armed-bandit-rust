@@ -17,7 +17,7 @@ const NAME3: &str = "e = 0, sample average";
 fn experiment() {
 
   let problems : Vec<problems::BanditStationary> =
-    (0..NB_TRIES).map( |_| problems::BanditStationary::new(NB_LEVERS,GAUSS))
+    (0..NB_TRIES).map( |_| problems::BanditStationary::new(NB_LEVERS,GAUSS,&mut rand::thread_rng()))
                  .collect();
   let est = estimators::SampleAverage::new(NB_LEVERS);
 
@@ -27,7 +27,7 @@ fn experiment() {
   policies.push(policies::EGreedy::new(NB_LEVERS,EPS3,est.clone()));
 
   let results : Vec<Vec<f64>> =
-    bandit_rs::optimal_percentage(bandit_rs::run_experiment(policies,problems,NB_TRIES,LEN_EXP),
+    bandit_rs::optimal_percentage(bandit_rs::run_experiments(policies,problems,NB_TRIES,LEN_EXP),
                                   NB_TRIES,
                                   LEN_EXP);
 
