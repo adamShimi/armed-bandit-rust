@@ -3,8 +3,9 @@ extern crate rand_distr;
 extern crate rayon;
 extern crate gnuplot;
 
-use rayon::prelude::*;
 use std::iter::once;
+
+use rayon::prelude::*;
 use gnuplot::{Graph, Figure, Caption,AxesCommon,AutoOption};
 
 pub mod problems;
