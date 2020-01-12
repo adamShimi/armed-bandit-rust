@@ -22,9 +22,9 @@ fn experiment() {
   let est = estimators::SampleAverage::new(NB_LEVERS);
 
   let mut policies = Vec::new();
-  policies.push(policies::EGreedy::new(NB_LEVERS,EPS,est.clone()));
-  policies.push(policies::EGreedy::new(NB_LEVERS,EPS2,est.clone()));
-  policies.push(policies::EGreedy::new(NB_LEVERS,EPS3,est.clone()));
+  policies.push(policies::EGreedy::new(NB_LEVERS,EPS,Box::new(est.clone())));
+  policies.push(policies::EGreedy::new(NB_LEVERS,EPS2,Box::new(est.clone())));
+  policies.push(policies::EGreedy::new(NB_LEVERS,EPS3,Box::new(est.clone())));
 
   let results : Vec<Vec<f64>> =
     bandit_rs::optimal_percentage(bandit_rs::run_experiments(policies,problems,NB_TRIES,LEN_EXP),
