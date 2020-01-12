@@ -14,17 +14,17 @@ pub trait Policy : Clone + Send {
 }
 
 #[derive(Clone)]
-pub struct EGreedy<T : estimators::Estimator + Clone> {
+pub struct EGreedy {
   nb_levers : usize,
   expl_proba : f64,
-  estimator : T,
+  estimator : Box<dyn estimators::Estimator>,
 }
 
-impl<T : estimators::Estimator + Clone> EGreedy<T> {
+impl EGreedy {
 
   pub fn new(nb_levers : usize,
              expl_proba: f64,
-             estimator : T) -> Self {
+             estimator : Box<dyn estimators::Estimator>) -> Self {
     EGreedy {
       nb_levers,
       expl_proba,
@@ -38,7 +38,7 @@ impl<T : estimators::Estimator + Clone> EGreedy<T> {
   }
 }
 
-impl<T : estimators::Estimator + Clone> Policy for EGreedy<T> {
+impl Policy for EGreedy {
 
   fn decide<V: Rng>(&self, rng: &mut V) -> usize {
     if rng.gen_bool(self.expl_proba) {
@@ -59,16 +59,16 @@ impl<T : estimators::Estimator + Clone> Policy for EGreedy<T> {
 }
 
 #[derive(Clone)]
-pub struct UCB<T : estimators::Estimator> {
+pub struct UCB {
   nb_levers : usize,
   time : f64,
   counts : Vec<f64>,
-  estimator : T,
+  estimator : Box<dyn estimators::Estimator>,
 }
 
-impl<T : estimators::Estimator> UCB<T> {
+impl UCB {
 
-  pub fn new(nb_levers : usize, estimator : T) -> Self {
+  pub fn new(nb_levers : usize, estimator : Box<dyn estimators::Estimator>) -> Self {
     UCB {
       nb_levers,
       time : 0.0,
@@ -78,7 +78,7 @@ impl<T : estimators::Estimator> UCB<T> {
   }
 }
 
-impl<T : estimators::Estimator> Policy for UCB<T> {
+impl Policy for UCB {
 
   fn decide<V: Rng>(&self, rng: &mut V) -> usize {
     let est_counts : Vec<f64> =
@@ -104,7 +104,9 @@ pub mod estimators {
 
   use crate::helper;
 
-  pub trait Estimator : Clone + Send {
+  use dyn_clone::DynClone;
+
+  pub trait Estimator : DynClone + Send {
     // Give the current estimate of the required lever.
     fn estimate(&self, lever : usize) -> f64;
 
@@ -123,6 +125,8 @@ pub mod estimators {
       helper::indices_max(&self.all(nb_levers))
     }
   }
+
+  dyn_clone::clone_trait_object!(Estimator);
 
   #[derive(Clone)]
   pub struct SampleAverage {
