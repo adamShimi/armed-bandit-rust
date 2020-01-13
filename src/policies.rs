@@ -30,13 +30,25 @@ pub struct EGreedy {
 
 impl EGreedy {
 
-  pub fn new(nb_levers : usize,
-             expl_proba: f64,
-             estimator : Box<dyn estimators::Estimator>) -> Self {
-    EGreedy {
-      nb_levers,
-      expl_proba,
-      estimator,
+  pub fn new(init_data : PolicyInit) -> Self {
+    match init_data {
+      PolicyInit::EGreedyInit { nb_levers, expl_proba, est} => {
+        match est {
+          esti @ estimators::EstimatorInit::SampleAverageInit {..} => {
+            EGreedy {
+              nb_levers,
+              expl_proba,
+              estimator : Box::new(estimators::SampleAverage::new(esti))}
+          },
+          esti @ estimators::EstimatorInit::ConstantStepInit {..} => {
+            EGreedy {
+              nb_levers,
+              expl_proba,
+              estimator : Box::new(estimators::ConstantStep::new(esti))}
+          },
+        }
+      },
+      _ => {panic!("Cannot create EGreedy from UCBInit");},
     }
   }
 
@@ -76,12 +88,27 @@ pub struct UCB {
 
 impl UCB {
 
-  pub fn new(nb_levers : usize, estimator : Box<dyn estimators::Estimator>) -> Self {
-    UCB {
-      nb_levers,
-      time : 0.0,
-      counts : vec![0.0;nb_levers],
-      estimator,
+  pub fn new(init_data : PolicyInit) -> Self {
+    match init_data {
+      PolicyInit::UCBInit { nb_levers, est } => {
+        match est {
+          esti @ estimators::EstimatorInit::SampleAverageInit {..} => {
+            UCB {
+              nb_levers,
+              time : 0.0,
+              counts : vec![0.0;nb_levers],
+              estimator : Box::new(estimators::SampleAverage::new(esti))}
+          },
+          esti @ estimators::EstimatorInit::ConstantStepInit {..} => {
+            UCB {
+              nb_levers,
+              time : 0.0,
+              counts : vec![0.0;nb_levers],
+              estimator : Box::new(estimators::ConstantStep::new(esti))}
+          },
+        }
+      },
+      _ => {panic!("Cannot create EGreedy from UCBInit");},
     }
   }
 }
@@ -150,10 +177,14 @@ pub mod estimators {
 
   impl SampleAverage {
 
-    pub fn new(nb_levers : usize) -> Self {
-      SampleAverage {
-        counter : vec![1.0;nb_levers],
-        estimates : vec![0.0;nb_levers],
+    pub fn new(init_data : EstimatorInit) -> Self {
+      match init_data {
+        EstimatorInit::SampleAverageInit {nb_levers} =>
+          SampleAverage {
+            counter : vec![1.0;nb_levers],
+            estimates : vec![0.0;nb_levers],
+          },
+        _ => {panic!("Cannot create SampleAverage from ConstantStepInit");},
       }
     }
   }
@@ -180,10 +211,14 @@ pub mod estimators {
 
   impl ConstantStep {
 
-    pub fn new(nb_levers : usize, step : f64) -> Self {
-      ConstantStep {
-        step,
-        estimates : vec![0.0;nb_levers],
+    pub fn new(init_data : EstimatorInit) -> Self {
+      match init_data {
+        EstimatorInit::ConstantStepInit {nb_levers, step} =>
+          ConstantStep {
+            step,
+            estimates : vec![0.0;nb_levers],
+          },
+        _ => {panic!("Cannot create ConstantStep from SampleAverageInit");},
       }
     }
   }
