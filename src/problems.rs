@@ -6,6 +6,16 @@ use std::iter::FromIterator;
 use rand::Rng;
 use rand_distr::{Normal, Distribution};
 
+pub enum BanditInit {
+  StationaryInit { nb_levers : usize,
+                   init_vals : (f64,f64)
+                 },
+  NonStationaryInit { nb_levers : usize,
+                      init_vals : (f64,f64),
+                      walk : (f64,f64)
+                    },
+}
+
 pub trait Bandit : Clone + Send {
   // Get reward from a lever.
   fn use_lever<T: Rng>(&mut self, lever : usize, rng: &mut T) -> f64;
