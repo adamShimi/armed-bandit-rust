@@ -3,6 +3,14 @@ use crate::helper;
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 
+pub enum PolicyInit {
+  EGreedyInit {nb_levers : usize,
+               expl_proba : f64,
+               est : estimators::EstimatorInit},
+  UCBInit {nb_levers : usize,
+           est : estimators::EstimatorInit},
+}
+
 pub trait Policy : Clone + Send {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
@@ -105,6 +113,12 @@ pub mod estimators {
   use crate::helper;
 
   use dyn_clone::DynClone;
+
+  pub enum EstimatorInit {
+    SampleAverageInit {nb_levers : usize},
+    ConstantStepInit {nb_levers : usize,
+                      step : f64},
+  }
 
   pub trait Estimator : DynClone + Send {
     // Give the current estimate of the required lever.
