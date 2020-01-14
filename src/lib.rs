@@ -16,19 +16,20 @@ pub mod problems;
 pub mod policies;
 pub mod helper;
 
-use problems::Bandit;
-use policies::Policy;
+pub use problems::BanditInit;
+pub use policies::PolicyInit;
+pub use policies::estimators::EstimatorInit;
+use problems::create_bandit;
+use policies::create_policy;
 use experiments::Experiment;
 use experiments::Step;
 
-pub fn run_experiments<T,U>(policies : Vec<U>,
-                            problems : Vec<T>,
-                            nb_tries : usize,
-                            len_exp : usize) -> Vec<Vec<Vec<Step>>>
-  where T : Bandit,
-        U : Policy {
+pub fn run_experiments(policies : Vec<PolicyInit>,
+                       problems : Vec<BanditInit>,
+                       nb_tries : usize,
+                       len_exp : usize) -> Vec<Vec<Vec<Step>>> {
 
-  make_vec_experiment(policies,problems,nb_tries)
+  make_vec_experiment(policies,problems,&mut rand::thread_rng(),nb_tries)
     .into_par_iter()
     .map(|exps|
       exps.into_par_iter()
@@ -39,16 +40,14 @@ pub fn run_experiments<T,U>(policies : Vec<U>,
     .collect()
 }
 
-pub fn run_reprod_experiments<T,U,V> (policies : Vec<U>,
-                                    problems : Vec<T>,
-                                    rng : &mut V,
-                                    nb_tries : usize,
-                                    len_exp : usize) -> Vec<Vec<Vec<Step>>>
-  where T : Bandit,
-        U : Policy,
-        V : Rng {
+pub fn run_reprod_experiments<T> (policies : Vec<PolicyInit>,
+                                  problems : Vec<BanditInit>,
+                                  rng : &mut T,
+                                  nb_tries : usize,
+                                  len_exp : usize) -> Vec<Vec<Vec<Step>>>
+  where T : Rng {
 
-  make_vec_experiment(policies,problems,nb_tries)
+  make_vec_experiment(policies,problems,rng,nb_tries)
     .into_iter()
     .map(|exps|
       exps.into_iter()
@@ -58,11 +57,11 @@ pub fn run_reprod_experiments<T,U,V> (policies : Vec<U>,
     .collect()
 }
 
-fn make_vec_experiment<T,U>(policies : Vec<U>,
-                            problems : Vec<T>,
-                            nb_tries : usize) -> Vec<Vec<Experiment<T,U>>>
-  where T : Bandit,
-        U : Policy {
+fn make_vec_experiment<T>(policies : Vec<PolicyInit>,
+                          problems : Vec<BanditInit>,
+                          rng : &mut T,
+                          nb_tries : usize) -> Vec<Vec<Experiment>>
+  where T : Rng {
 
   policies.into_iter()
           .map(|x| once(x).cycle()
@@ -71,10 +70,10 @@ fn make_vec_experiment<T,U>(policies : Vec<U>,
                                       .into_iter()
                           )
                           .map(|(policy,problem)|
-                            Experiment::new(problem.clone(),
-                                            policy.clone())
+                            Experiment::new(create_policy(policy.clone()),
+                                            create_bandit(problem.clone(),rng))
                           )
-                          .collect::<Vec<Experiment<T,U>>>()
+                          .collect::<Vec<Experiment>>()
           )
           .collect()
 }
