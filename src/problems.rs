@@ -5,7 +5,9 @@ use std::iter::FromIterator;
 
 use rand::Rng;
 use rand_distr::{Normal, Distribution};
+use enum_dispatch::enum_dispatch;
 
+#[derive(Clone)]
 pub enum BanditInit {
   StationaryInit { nb_levers : usize,
                    init_vals : (f64,f64)
@@ -16,12 +18,27 @@ pub enum BanditInit {
                     },
 }
 
+#[enum_dispatch]
+#[derive(Clone)]
+pub enum BanditEnum {
+  BanditStationary,
+  BanditNonStationary,
+}
+
+#[enum_dispatch(BanditEnum)]
 pub trait Bandit : Clone + Send {
   // Get reward from a lever.
   fn use_lever<T: Rng>(&mut self, lever : usize, rng: &mut T) -> f64;
 
   // Get set of optimal levers.
   fn is_optimal(&self, lever : usize) -> bool;
+}
+
+pub fn create_bandit<T : Rng>(init_data : BanditInit, rng : &mut T) -> BanditEnum {
+  match init_data {
+    init @ BanditInit::StationaryInit {..} => BanditStationary::new(init,rng).into(),
+    init @ BanditInit::NonStationaryInit {..} => BanditNonStationary::new(init).into(),
+  }
 }
 
 // Implementatio of a stationary bandit instance, where

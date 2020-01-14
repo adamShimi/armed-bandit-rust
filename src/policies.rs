@@ -2,7 +2,9 @@ use crate::helper;
 
 use rand::Rng;
 use rand::prelude::IteratorRandom;
+use enum_dispatch::enum_dispatch;
 
+#[derive(Clone)]
 pub enum PolicyInit {
   EGreedyInit {nb_levers : usize,
                expl_proba : f64,
@@ -11,6 +13,14 @@ pub enum PolicyInit {
            est : estimators::EstimatorInit},
 }
 
+#[enum_dispatch]
+#[derive(Clone)]
+pub enum PolicyEnum {
+  EGreedy,
+  UCB,
+}
+
+#[enum_dispatch(PolicyEnum)]
 pub trait Policy : Clone + Send {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
@@ -19,6 +29,13 @@ pub trait Policy : Clone + Send {
   // Update its values based on the result of the
   // step.
   fn update(&mut self, lever : usize, reward : f64);
+}
+
+pub fn create_policy(init_data : PolicyInit) -> PolicyEnum {
+  match init_data {
+    init @ PolicyInit::EGreedyInit {..} => EGreedy::new(init).into(),
+    init @ PolicyInit::UCBInit {..} => UCB::new(init).into(),
+  }
 }
 
 #[derive(Clone)]
@@ -141,6 +158,7 @@ pub mod estimators {
 
   use dyn_clone::DynClone;
 
+  #[derive(Clone)]
   pub enum EstimatorInit {
     SampleAverageInit {nb_levers : usize},
     ConstantStepInit {nb_levers : usize,

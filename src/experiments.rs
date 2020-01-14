@@ -1,24 +1,22 @@
 use rand::Rng;
 
 use crate::problems::Bandit;
+use crate::problems::BanditEnum;
 use crate::policies::Policy;
+use crate::policies::PolicyEnum;
 
 
 #[derive(Clone)]
-pub struct Experiment<T,U>
-  where T : Bandit,
-        U : Policy {
-  problem : T,
-  policy : U,
+pub struct Experiment {
+  policy : PolicyEnum,
+  problem : BanditEnum,
   results : Vec<Step>,
 }
 
-impl<T,U> Experiment<T,U>
-  where T : Bandit,
-        U : Policy {
+impl Experiment {
 
-  pub fn new(problem : T,
-             policy : U) -> Self {
+  pub fn new(policy : PolicyEnum,
+             problem : BanditEnum) -> Self {
     Experiment {
       problem,
       policy,
