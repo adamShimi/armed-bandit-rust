@@ -1,6 +1,4 @@
-use bandit_rs;
-use bandit_rs::{policies,problems};
-use policies::estimators;
+use bandit_rs::{BanditInit,EstimatorInit,PolicyInit};
 
 const NB_LEVERS:usize = 10;
 const NB_TRIES:usize = 2000;
@@ -16,15 +14,23 @@ const NAME3: &str = "e = 0, sample average";
 #[test]
 fn experiment() {
 
-  let problems : Vec<problems::BanditStationary> =
-    (0..NB_TRIES).map( |_| problems::BanditStationary::new(NB_LEVERS,GAUSS,&mut rand::thread_rng()))
+  let problems : Vec<BanditInit> =
+    (0..NB_TRIES).map( |_| BanditInit::StationaryInit {nb_levers : NB_LEVERS,
+                                                       init_vals : GAUSS}
+                 )
                  .collect();
-  let est = estimators::SampleAverage::new(NB_LEVERS);
+  let est = EstimatorInit::SampleAverageInit {nb_levers : NB_LEVERS};
 
   let mut policies = Vec::new();
-  policies.push(policies::EGreedy::new(NB_LEVERS,EPS,Box::new(est.clone())));
-  policies.push(policies::EGreedy::new(NB_LEVERS,EPS2,Box::new(est.clone())));
-  policies.push(policies::EGreedy::new(NB_LEVERS,EPS3,Box::new(est.clone())));
+  policies.push(PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
+                                         expl_proba : EPS,
+                                         est :est.clone()});
+  policies.push(PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
+                                         expl_proba : EPS2,
+                                         est :est.clone()});
+  policies.push(PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
+                                         expl_proba : EPS3,
+                                         est :est.clone()});
 
   let results : Vec<Vec<f64>> =
     bandit_rs::optimal_percentage(bandit_rs::run_experiments(policies,problems,NB_TRIES,LEN_EXP),
