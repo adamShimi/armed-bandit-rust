@@ -15,6 +15,8 @@ pub mod problems;
 pub mod policies;
 pub mod helper;
 
+use problems::Bandit;
+use policies::Policy;
 use experiments::Experiment;
 use experiments::Step;
 
@@ -22,8 +24,8 @@ pub fn run_experiments<T,U>(policies : Vec<U>,
                             problems : Vec<T>,
                             nb_tries : usize,
                             len_exp : usize) -> Vec<Vec<Vec<Step>>>
-  where T : problems::Bandit,
-        U : policies::Policy {
+  where T : Bandit,
+        U : Policy {
 
   make_vec_experiment(policies,problems,nb_tries)
     .into_par_iter()
@@ -41,8 +43,8 @@ pub fn run_reprod_experiments<T,U,V> (policies : Vec<U>,
                                     rng : &mut V,
                                     nb_tries : usize,
                                     len_exp : usize) -> Vec<Vec<Vec<Step>>>
-  where T : problems::Bandit,
-        U : policies::Policy,
+  where T : Bandit,
+        U : Policy,
         V : Rng {
 
   make_vec_experiment(policies,problems,nb_tries)
@@ -58,8 +60,8 @@ pub fn run_reprod_experiments<T,U,V> (policies : Vec<U>,
 fn make_vec_experiment<T,U>(policies : Vec<U>,
                             problems : Vec<T>,
                             nb_tries : usize) -> Vec<Vec<Experiment<T,U>>>
-  where T : problems::Bandit,
-        U : policies::Policy {
+  where T : Bandit,
+        U : Policy {
 
   policies.into_iter()
           .map(|x| once(x).cycle()
