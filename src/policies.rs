@@ -3,6 +3,7 @@ use crate::helper;
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 use enum_dispatch::enum_dispatch;
+use estimators::Estimator;
 
 #[derive(Clone)]
 pub enum PolicyInit {
@@ -42,7 +43,7 @@ pub fn create_policy(init_data : PolicyInit) -> PolicyEnum {
 pub struct EGreedy {
   nb_levers : usize,
   expl_proba : f64,
-  estimator : Box<dyn estimators::Estimator>,
+  estimator : estimators::EstimatorEnum,
 }
 
 impl EGreedy {
@@ -55,13 +56,13 @@ impl EGreedy {
             EGreedy {
               nb_levers,
               expl_proba,
-              estimator : Box::new(estimators::SampleAverage::new(esti))}
+              estimator : estimators::create_estimator(esti).into()}
           },
           esti @ estimators::EstimatorInit::ConstantStepInit {..} => {
             EGreedy {
               nb_levers,
               expl_proba,
-              estimator : Box::new(estimators::ConstantStep::new(esti))}
+              estimator : estimators::create_estimator(esti).into()}
           },
         }
       },
@@ -100,7 +101,7 @@ pub struct UCB {
   nb_levers : usize,
   time : f64,
   counts : Vec<f64>,
-  estimator : Box<dyn estimators::Estimator>,
+  estimator : estimators::EstimatorEnum,
 }
 
 impl UCB {
@@ -114,14 +115,14 @@ impl UCB {
               nb_levers,
               time : 0.0,
               counts : vec![0.0;nb_levers],
-              estimator : Box::new(estimators::SampleAverage::new(esti))}
+              estimator : estimators::create_estimator(esti).into()}
           },
           esti @ estimators::EstimatorInit::ConstantStepInit {..} => {
             UCB {
               nb_levers,
               time : 0.0,
               counts : vec![0.0;nb_levers],
-              estimator : Box::new(estimators::ConstantStep::new(esti))}
+              estimator : estimators::create_estimator(esti).into()}
           },
         }
       },
@@ -155,8 +156,7 @@ impl Policy for UCB {
 pub mod estimators {
 
   use crate::helper;
-
-  use dyn_clone::DynClone;
+  use enum_dispatch::enum_dispatch;
 
   #[derive(Clone)]
   pub enum EstimatorInit {
@@ -165,7 +165,15 @@ pub mod estimators {
                       step : f64},
   }
 
-  pub trait Estimator : DynClone + Send {
+  #[enum_dispatch]
+  #[derive(Clone)]
+  pub enum EstimatorEnum {
+    SampleAverage,
+    ConstantStep,
+  }
+
+  #[enum_dispatch(EstimatorEnum)]
+  pub trait Estimator : Send {
     // Give the current estimate of the required lever.
     fn estimate(&self, lever : usize) -> f64;
 
@@ -185,7 +193,12 @@ pub mod estimators {
     }
   }
 
-  dyn_clone::clone_trait_object!(Estimator);
+  pub fn create_estimator(init_data : EstimatorInit) -> EstimatorEnum {
+    match init_data {
+      init @ EstimatorInit::SampleAverageInit {..} => SampleAverage::new(init).into(),
+      init @ EstimatorInit::ConstantStepInit {..} => ConstantStep::new(init).into(),
+    }
+  }
 
   #[derive(Clone)]
   pub struct SampleAverage {
