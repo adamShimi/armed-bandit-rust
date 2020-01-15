@@ -1,17 +1,17 @@
+use crate::estimators::{Estimator,EstimatorInit,EstimatorEnum, create_estimator};
 use crate::helper;
 
 use rand::Rng;
 use rand::prelude::IteratorRandom;
 use enum_dispatch::enum_dispatch;
-use estimators::Estimator;
 
 #[derive(Clone)]
 pub enum PolicyInit {
   EGreedyInit {nb_levers : usize,
                expl_proba : f64,
-               est : estimators::EstimatorInit},
+               est : EstimatorInit},
   UCBInit {nb_levers : usize,
-           est : estimators::EstimatorInit},
+           est : EstimatorInit},
 }
 
 #[enum_dispatch]
@@ -43,7 +43,7 @@ pub fn create_policy(init_data : PolicyInit) -> PolicyEnum {
 pub struct EGreedy {
   nb_levers : usize,
   expl_proba : f64,
-  estimator : estimators::EstimatorEnum,
+  estimator : EstimatorEnum,
 }
 
 impl EGreedy {
@@ -52,17 +52,17 @@ impl EGreedy {
     match init_data {
       PolicyInit::EGreedyInit { nb_levers, expl_proba, est} => {
         match est {
-          esti @ estimators::EstimatorInit::SampleAverageInit {..} => {
+          esti @ EstimatorInit::SampleAverageInit {..} => {
             EGreedy {
               nb_levers,
               expl_proba,
-              estimator : estimators::create_estimator(esti).into()}
+              estimator : create_estimator(esti).into()}
           },
-          esti @ estimators::EstimatorInit::ConstantStepInit {..} => {
+          esti @ EstimatorInit::ConstantStepInit {..} => {
             EGreedy {
               nb_levers,
               expl_proba,
-              estimator : estimators::create_estimator(esti).into()}
+              estimator : create_estimator(esti).into()}
           },
         }
       },
@@ -101,7 +101,7 @@ pub struct UCB {
   nb_levers : usize,
   time : f64,
   counts : Vec<f64>,
-  estimator : estimators::EstimatorEnum,
+  estimator : EstimatorEnum,
 }
 
 impl UCB {
@@ -110,19 +110,19 @@ impl UCB {
     match init_data {
       PolicyInit::UCBInit { nb_levers, est } => {
         match est {
-          esti @ estimators::EstimatorInit::SampleAverageInit {..} => {
+          esti @ EstimatorInit::SampleAverageInit {..} => {
             UCB {
               nb_levers,
               time : 0.0,
               counts : vec![0.0;nb_levers],
-              estimator : estimators::create_estimator(esti).into()}
+              estimator : create_estimator(esti).into()}
           },
-          esti @ estimators::EstimatorInit::ConstantStepInit {..} => {
+          esti @ EstimatorInit::ConstantStepInit {..} => {
             UCB {
               nb_levers,
               time : 0.0,
               counts : vec![0.0;nb_levers],
-              estimator : estimators::create_estimator(esti).into()}
+              estimator : create_estimator(esti).into()}
           },
         }
       },
@@ -150,119 +150,5 @@ impl Policy for UCB {
   // step.
   fn update(&mut self, lever : usize, reward : f64) {
     self.estimator.update(lever,reward);
-  }
-}
-
-pub mod estimators {
-
-  use crate::helper;
-  use enum_dispatch::enum_dispatch;
-
-  #[derive(Clone)]
-  pub enum EstimatorInit {
-    SampleAverageInit {nb_levers : usize},
-    ConstantStepInit {nb_levers : usize,
-                      step : f64},
-  }
-
-  #[enum_dispatch]
-  #[derive(Clone)]
-  pub enum EstimatorEnum {
-    SampleAverage,
-    ConstantStep,
-  }
-
-  #[enum_dispatch(EstimatorEnum)]
-  pub trait Estimator : Send {
-    // Give the current estimate of the required lever.
-    fn estimate(&self, lever : usize) -> f64;
-
-    // Update the estimate of the lever according to
-    // the reward.
-    fn update(&mut self, lever : usize, reward : f64);
-
-    // Give all estimates.
-    fn all(&self, nb_levers : usize) -> Vec<f64> {
-      (0..nb_levers).map(|x| self.estimate(x))
-                    .collect()
-    }
-
-    // Find the list of levers with the best estimate.
-    fn optimal(&self, nb_levers : usize) -> Vec<usize> {
-      helper::indices_max(&self.all(nb_levers))
-    }
-  }
-
-  pub fn create_estimator(init_data : EstimatorInit) -> EstimatorEnum {
-    match init_data {
-      init @ EstimatorInit::SampleAverageInit {..} => SampleAverage::new(init).into(),
-      init @ EstimatorInit::ConstantStepInit {..} => ConstantStep::new(init).into(),
-    }
-  }
-
-  #[derive(Clone)]
-  pub struct SampleAverage {
-    pub counter : Vec<f64>,
-    pub estimates : Vec<f64>,
-  }
-
-  impl SampleAverage {
-
-    pub fn new(init_data : EstimatorInit) -> Self {
-      match init_data {
-        EstimatorInit::SampleAverageInit {nb_levers} =>
-          SampleAverage {
-            counter : vec![1.0;nb_levers],
-            estimates : vec![0.0;nb_levers],
-          },
-        _ => {panic!("Cannot create SampleAverage from ConstantStepInit");},
-      }
-    }
-  }
-
-  impl Estimator for SampleAverage {
-
-    fn estimate(&self, lever : usize) -> f64 {
-      self.estimates[lever]
-    }
-
-    fn update(&mut self, lever : usize, reward : f64) {
-      self.estimates[lever] =
-        self.estimates[lever] + (reward - self.estimates[lever])/self.counter[lever];
-      self.counter[lever] += 1.0;
-    }
-  }
-
-
-  #[derive(Clone)]
-  pub struct ConstantStep {
-    pub step : f64,
-    pub estimates : Vec<f64>,
-  }
-
-  impl ConstantStep {
-
-    pub fn new(init_data : EstimatorInit) -> Self {
-      match init_data {
-        EstimatorInit::ConstantStepInit {nb_levers, step} =>
-          ConstantStep {
-            step,
-            estimates : vec![0.0;nb_levers],
-          },
-        _ => {panic!("Cannot create ConstantStep from SampleAverageInit");},
-      }
-    }
-  }
-
-  impl Estimator for ConstantStep {
-
-    fn estimate(&self, lever : usize) -> f64 {
-      self.estimates[lever]
-    }
-
-    fn update(&mut self, lever : usize, reward : f64) {
-      self.estimates[lever] =
-        self.estimates[lever] + self.step*(reward - self.estimates[lever]);
-    }
   }
 }

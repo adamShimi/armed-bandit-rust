@@ -10,6 +10,7 @@ and applying reinforcement learning techniques to it.
 * ~~Clarify the API.~~ Done
 * ~~Create init structures~~ Done
 * ~~Adapt lib functions.~~ Done
+* ~~Extract estimator into its own mod.~~ Done
 * Use only reference of init structures.
 * Use only one init structure of problem.
 * Remove init structures from new.

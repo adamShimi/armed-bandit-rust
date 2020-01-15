@@ -13,11 +13,12 @@ use gnuplot::{Graph, Figure, Caption,AxesCommon,AutoOption};
 pub mod experiments;
 pub mod problems;
 pub mod policies;
+pub mod estimators;
 pub mod helper;
 
 pub use problems::BanditInit;
 pub use policies::PolicyInit;
-pub use policies::estimators::EstimatorInit;
+pub use estimators::EstimatorInit;
 use problems::create_bandit;
 use policies::create_policy;
 use experiments::Experiment;
