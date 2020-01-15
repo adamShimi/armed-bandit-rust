@@ -34,10 +34,10 @@ pub trait Bandit : Clone + Send {
   fn is_optimal(&self, lever : usize) -> bool;
 }
 
-pub fn create_bandit<T : Rng>(init_data : BanditInit, rng : &mut T) -> BanditEnum {
+pub fn create_bandit<T : Rng>(init_data : &BanditInit, rng : &mut T) -> BanditEnum {
   match init_data {
-    init @ BanditInit::StationaryInit {..} => BanditStationary::new(init,rng).into(),
-    init @ BanditInit::NonStationaryInit {..} => BanditNonStationary::new(init).into(),
+    init @ &BanditInit::StationaryInit {..} => BanditStationary::new(init,rng).into(),
+    init @ &BanditInit::NonStationaryInit {..} => BanditNonStationary::new(init).into(),
   }
 }
 
@@ -51,9 +51,9 @@ pub struct BanditStationary {
 
 impl BanditStationary {
 
-  pub fn new<T: Rng>(init_data : BanditInit, rng : &mut T) -> Self {
+  pub fn new<T: Rng>(init_data : &BanditInit, rng : &mut T) -> Self {
     match init_data {
-      BanditInit::StationaryInit { nb_levers, init_vals } => {
+      &BanditInit::StationaryInit { nb_levers, init_vals } => {
         let init_distrib = Normal::new(init_vals.0,init_vals.1).unwrap();
         let (levers,optimals) : (Vec<Normal<f64>>,Vec<f64>) =
           (0..nb_levers).map(|_| {
@@ -98,9 +98,9 @@ pub struct BanditNonStationary {
 
 impl BanditNonStationary {
 
-  pub fn new(init_data : BanditInit) -> Self {
+  pub fn new(init_data : &BanditInit) -> Self {
     match init_data {
-      BanditInit::NonStationaryInit {nb_levers,init_vals,walk} =>
+      &BanditInit::NonStationaryInit {nb_levers,init_vals,walk} =>
         BanditNonStationary {
           levers : vec![init_vals.0; nb_levers],
           std : init_vals.1,

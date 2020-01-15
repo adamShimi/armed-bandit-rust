@@ -36,10 +36,10 @@ pub trait Estimator : Send {
   }
 }
 
-pub fn create_estimator(init_data : EstimatorInit) -> EstimatorEnum {
+pub fn create_estimator(init_data : &EstimatorInit) -> EstimatorEnum {
   match init_data {
-    init @ EstimatorInit::SampleAverageInit {..} => SampleAverage::new(init).into(),
-    init @ EstimatorInit::ConstantStepInit {..} => ConstantStep::new(init).into(),
+    init @ &EstimatorInit::SampleAverageInit {..} => SampleAverage::new(init).into(),
+    init @ &EstimatorInit::ConstantStepInit {..} => ConstantStep::new(init).into(),
   }
 }
 
@@ -51,9 +51,9 @@ pub struct SampleAverage {
 
 impl SampleAverage {
 
-  pub fn new(init_data : EstimatorInit) -> Self {
+  pub fn new(init_data : &EstimatorInit) -> Self {
     match init_data {
-      EstimatorInit::SampleAverageInit {nb_levers} =>
+      &EstimatorInit::SampleAverageInit {nb_levers} =>
         SampleAverage {
           counter : vec![1.0;nb_levers],
           estimates : vec![0.0;nb_levers],
@@ -85,9 +85,9 @@ pub struct ConstantStep {
 
 impl ConstantStep {
 
-  pub fn new(init_data : EstimatorInit) -> Self {
+  pub fn new(init_data : &EstimatorInit) -> Self {
     match init_data {
-      EstimatorInit::ConstantStepInit {nb_levers, step} =>
+      &EstimatorInit::ConstantStepInit {nb_levers, step} =>
         ConstantStep {
           step,
           estimates : vec![0.0;nb_levers],

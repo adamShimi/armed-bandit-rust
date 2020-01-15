@@ -6,12 +6,12 @@ use rand::prelude::IteratorRandom;
 use enum_dispatch::enum_dispatch;
 
 #[derive(Clone)]
-pub enum PolicyInit {
+pub enum PolicyInit<'a> {
   EGreedyInit {nb_levers : usize,
                expl_proba : f64,
-               est : EstimatorInit},
+               est : &'a EstimatorInit},
   UCBInit {nb_levers : usize,
-           est : EstimatorInit},
+           est : &'a EstimatorInit},
 }
 
 #[enum_dispatch]
@@ -32,10 +32,10 @@ pub trait Policy : Clone + Send {
   fn update(&mut self, lever : usize, reward : f64);
 }
 
-pub fn create_policy(init_data : PolicyInit) -> PolicyEnum {
+pub fn create_policy(init_data : &PolicyInit) -> PolicyEnum {
   match init_data {
-    init @ PolicyInit::EGreedyInit {..} => EGreedy::new(init).into(),
-    init @ PolicyInit::UCBInit {..} => UCB::new(init).into(),
+    init @ &PolicyInit::EGreedyInit {..} => EGreedy::new(init).into(),
+    init @ &PolicyInit::UCBInit {..} => UCB::new(init).into(),
   }
 }
 
@@ -48,9 +48,9 @@ pub struct EGreedy {
 
 impl EGreedy {
 
-  pub fn new(init_data : PolicyInit) -> Self {
+  pub fn new(init_data : &PolicyInit) -> Self {
     match init_data {
-      PolicyInit::EGreedyInit { nb_levers, expl_proba, est} => {
+      &PolicyInit::EGreedyInit { nb_levers, expl_proba, est} => {
         match est {
           esti @ EstimatorInit::SampleAverageInit {..} => {
             EGreedy {
@@ -106,9 +106,9 @@ pub struct UCB {
 
 impl UCB {
 
-  pub fn new(init_data : PolicyInit) -> Self {
+  pub fn new(init_data : &PolicyInit) -> Self {
     match init_data {
-      PolicyInit::UCBInit { nb_levers, est } => {
+      &PolicyInit::UCBInit { nb_levers, est } => {
         match est {
           esti @ EstimatorInit::SampleAverageInit {..} => {
             UCB {

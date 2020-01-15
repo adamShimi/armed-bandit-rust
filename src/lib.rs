@@ -24,8 +24,8 @@ use policies::create_policy;
 use experiments::Experiment;
 use experiments::Step;
 
-pub fn run_experiments(policies : Vec<PolicyInit>,
-                       problems : Vec<BanditInit>,
+pub fn run_experiments(policies : &[PolicyInit],
+                       problems : &[BanditInit],
                        nb_tries : usize,
                        len_exp : usize) -> Vec<Vec<Vec<Step>>> {
 
@@ -40,8 +40,8 @@ pub fn run_experiments(policies : Vec<PolicyInit>,
     .collect()
 }
 
-pub fn run_reprod_experiments<T> (policies : Vec<PolicyInit>,
-                                  problems : Vec<BanditInit>,
+pub fn run_reprod_experiments<T> (policies : &[PolicyInit],
+                                  problems : &[BanditInit],
                                   rng : &mut T,
                                   nb_tries : usize,
                                   len_exp : usize) -> Vec<Vec<Vec<Step>>>
@@ -57,8 +57,8 @@ pub fn run_reprod_experiments<T> (policies : Vec<PolicyInit>,
     .collect()
 }
 
-fn make_vec_experiment<T>(policies : Vec<PolicyInit>,
-                          problems : Vec<BanditInit>,
+fn make_vec_experiment<T>(policies : &[PolicyInit],
+                          problems : &[BanditInit],
                           rng : &mut T,
                           nb_tries : usize) -> Vec<Vec<Experiment>>
   where T : Rng {
@@ -66,12 +66,11 @@ fn make_vec_experiment<T>(policies : Vec<PolicyInit>,
   policies.into_iter()
           .map(|x| once(x).cycle()
                           .take(nb_tries)
-                          .zip(problems.clone()
-                                      .into_iter()
+                          .zip(problems.into_iter()
                           )
                           .map(|(policy,problem)|
-                            Experiment::new(create_policy(policy.clone()),
-                                            create_bandit(problem.clone(),rng))
+                            Experiment::new(create_policy(policy),
+                                            create_bandit(problem,rng))
                           )
                           .collect::<Vec<Experiment>>()
           )
