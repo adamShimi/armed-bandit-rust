@@ -34,8 +34,10 @@ pub trait Policy : Clone + Send {
 
 pub fn create_policy(init_data : &PolicyInit) -> PolicyEnum {
   match init_data {
-    init @ &PolicyInit::EGreedyInit {..} => EGreedy::new(init).into(),
-    init @ &PolicyInit::UCBInit {..} => UCB::new(init).into(),
+    &PolicyInit::EGreedyInit {nb_levers,expl_proba,est} =>
+      EGreedy::new(nb_levers,expl_proba,est).into(),
+    &PolicyInit::UCBInit {nb_levers, est} =>
+      UCB::new(nb_levers,est).into(),
   }
 }
 
@@ -48,28 +50,13 @@ pub struct EGreedy {
 
 impl EGreedy {
 
-  pub fn new(init_data : &PolicyInit) -> Self {
-    match init_data {
-      &PolicyInit::EGreedyInit { nb_levers, expl_proba, est} => {
-        match est {
-          esti @ EstimatorInit::SampleAverageInit {..} => {
-            EGreedy {
-              nb_levers,
-              expl_proba,
-              estimator : create_estimator(esti).into()}
-          },
-          esti @ EstimatorInit::ConstantStepInit {..} => {
-            EGreedy {
-              nb_levers,
-              expl_proba,
-              estimator : create_estimator(esti).into()}
-          },
-        }
-      },
-      _ => {panic!("Cannot create EGreedy from UCBInit");},
+  pub fn new(nb_levers : usize, expl_proba : f64, est : &EstimatorInit) -> Self {
+    EGreedy {
+      nb_levers,
+      expl_proba,
+      estimator : create_estimator(est).into()
     }
   }
-
 
   fn explore<V: Rng>(&self, rng : &mut V) -> usize {
     rng.gen_range(0,self.nb_levers)
@@ -106,27 +93,12 @@ pub struct UCB {
 
 impl UCB {
 
-  pub fn new(init_data : &PolicyInit) -> Self {
-    match init_data {
-      &PolicyInit::UCBInit { nb_levers, est } => {
-        match est {
-          esti @ EstimatorInit::SampleAverageInit {..} => {
-            UCB {
-              nb_levers,
-              time : 0.0,
-              counts : vec![0.0;nb_levers],
-              estimator : create_estimator(esti).into()}
-          },
-          esti @ EstimatorInit::ConstantStepInit {..} => {
-            UCB {
-              nb_levers,
-              time : 0.0,
-              counts : vec![0.0;nb_levers],
-              estimator : create_estimator(esti).into()}
-          },
-        }
-      },
-      _ => {panic!("Cannot create EGreedy from UCBInit");},
+  pub fn new(nb_levers : usize, est : &EstimatorInit) -> Self {
+    UCB {
+      nb_levers,
+      time : 0.0,
+      counts : vec![0.0;nb_levers],
+      estimator : create_estimator(est).into()
     }
   }
 }
