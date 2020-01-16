@@ -36,8 +36,10 @@ pub trait Bandit : Clone + Send {
 
 pub fn create_bandit<T : Rng>(init_data : &BanditInit, rng : &mut T) -> BanditEnum {
   match init_data {
-    init @ &BanditInit::StationaryInit {..} => BanditStationary::new(init,rng).into(),
-    init @ &BanditInit::NonStationaryInit {..} => BanditNonStationary::new(init).into(),
+    &BanditInit::StationaryInit {nb_levers,init_vals} =>
+      BanditStationary::new(nb_levers,init_vals,rng).into(),
+    &BanditInit::NonStationaryInit {nb_levers,init_vals,walk} =>
+      BanditNonStationary::new(nb_levers,init_vals,walk).into(),
   }
 }
 
@@ -51,22 +53,17 @@ pub struct BanditStationary {
 
 impl BanditStationary {
 
-  pub fn new<T: Rng>(init_data : &BanditInit, rng : &mut T) -> Self {
-    match init_data {
-      &BanditInit::StationaryInit { nb_levers, init_vals } => {
-        let init_distrib = Normal::new(init_vals.0,init_vals.1).unwrap();
-        let (levers,optimals) : (Vec<Normal<f64>>,Vec<f64>) =
-          (0..nb_levers).map(|_| {
-                          let mean = init_distrib.sample(rng);
-                          (Normal::new(mean, init_vals.1).unwrap(),mean)
-                        })
-                        .unzip();
-        BanditStationary {
-          levers,
-          optimals : HashSet::from_iter(helper::indices_max(&optimals)),
-        }
-      },
-      _ => {panic!("Cannot create BanditStationary from NonStationaryInit");}
+  pub fn new<T: Rng>(nb_levers : usize, init_vals : (f64,f64), rng : &mut T) -> Self {
+    let init_distrib = Normal::new(init_vals.0,init_vals.1).unwrap();
+    let (levers,optimals) : (Vec<Normal<f64>>,Vec<f64>) =
+      (0..nb_levers).map(|_| {
+                      let mean = init_distrib.sample(rng);
+                      (Normal::new(mean, init_vals.1).unwrap(),mean)
+                    })
+                    .unzip();
+    BanditStationary {
+      levers,
+      optimals : HashSet::from_iter(helper::indices_max(&optimals)),
     }
   }
 }
@@ -98,17 +95,13 @@ pub struct BanditNonStationary {
 
 impl BanditNonStationary {
 
-  pub fn new(init_data : &BanditInit) -> Self {
-    match init_data {
-      &BanditInit::NonStationaryInit {nb_levers,init_vals,walk} =>
-        BanditNonStationary {
-          levers : vec![init_vals.0; nb_levers],
-          std : init_vals.1,
-          walks : (0..nb_levers).map(|_| Normal::new(walk.0,walk.1).unwrap())
-                                .collect(),
-          optimals : (0..nb_levers).collect(),
-        },
-      _ => {panic!("Cannot create BanditNonStationary from StationaryInit");},
+  pub fn new(nb_levers : usize, init_vals : (f64,f64), walk: (f64,f64)) -> Self {
+    BanditNonStationary {
+      levers : vec![init_vals.0; nb_levers],
+      std : init_vals.1,
+      walks : (0..nb_levers).map(|_| Normal::new(walk.0,walk.1).unwrap())
+                            .collect(),
+      optimals : (0..nb_levers).collect(),
     }
   }
 
