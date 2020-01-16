@@ -38,8 +38,10 @@ pub trait Estimator : Send {
 
 pub fn create_estimator(init_data : &EstimatorInit) -> EstimatorEnum {
   match init_data {
-    init @ &EstimatorInit::SampleAverageInit {..} => SampleAverage::new(init).into(),
-    init @ &EstimatorInit::ConstantStepInit {..} => ConstantStep::new(init).into(),
+    &EstimatorInit::SampleAverageInit {nb_levers} =>
+      SampleAverage::new(nb_levers).into(),
+    &EstimatorInit::ConstantStepInit {nb_levers, step} =>
+      ConstantStep::new(nb_levers,step).into(),
   }
 }
 
@@ -51,14 +53,10 @@ pub struct SampleAverage {
 
 impl SampleAverage {
 
-  pub fn new(init_data : &EstimatorInit) -> Self {
-    match init_data {
-      &EstimatorInit::SampleAverageInit {nb_levers} =>
-        SampleAverage {
-          counter : vec![1.0;nb_levers],
-          estimates : vec![0.0;nb_levers],
-        },
-      _ => {panic!("Cannot create SampleAverage from ConstantStepInit");},
+  pub fn new(nb_levers : usize) -> Self {
+    SampleAverage {
+      counter : vec![1.0;nb_levers],
+      estimates : vec![0.0;nb_levers],
     }
   }
 }
@@ -85,14 +83,10 @@ pub struct ConstantStep {
 
 impl ConstantStep {
 
-  pub fn new(init_data : &EstimatorInit) -> Self {
-    match init_data {
-      &EstimatorInit::ConstantStepInit {nb_levers, step} =>
-        ConstantStep {
-          step,
-          estimates : vec![0.0;nb_levers],
-        },
-      _ => {panic!("Cannot create ConstantStep from SampleAverageInit");},
+  pub fn new(nb_levers : usize, step : f64) -> Self {
+    ConstantStep {
+      step,
+      estimates : vec![0.0;nb_levers],
     }
   }
 }
