@@ -12,8 +12,8 @@ and applying reinforcement learning techniques to it.
 * ~~Adapt lib functions.~~ Done
 * ~~Extract estimator into its own mod.~~ Done
 * ~~Use only reference of init structures.~~ Done
-* ~~Use only one init structure of problem.~~ Done
-* Remove init structures from new.
+* ~~Use only one init structure of problem.~~ Done,
+* ~~Remove init structures from new.~~ Done
 * Return slices from API functions.
 * Make only init structures and lib function visible in the API.
 * Update examples.
