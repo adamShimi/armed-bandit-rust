@@ -25,11 +25,11 @@ use experiments::Experiment;
 use experiments::Step;
 
 pub fn run_experiments(policies : &[PolicyInit],
-                       problems : &[BanditInit],
+                       problem : BanditInit,
                        nb_tries : usize,
                        len_exp : usize) -> Vec<Vec<Vec<Step>>> {
 
-  make_vec_experiment(policies,problems,&mut rand::thread_rng(),nb_tries)
+  make_vec_experiment(policies,problem,&mut rand::thread_rng(),nb_tries)
     .into_par_iter()
     .map(|exps|
       exps.into_par_iter()
@@ -41,13 +41,13 @@ pub fn run_experiments(policies : &[PolicyInit],
 }
 
 pub fn run_reprod_experiments<T> (policies : &[PolicyInit],
-                                  problems : &[BanditInit],
+                                  problem : BanditInit,
                                   rng : &mut T,
                                   nb_tries : usize,
                                   len_exp : usize) -> Vec<Vec<Vec<Step>>>
   where T : Rng {
 
-  make_vec_experiment(policies,problems,rng,nb_tries)
+  make_vec_experiment(policies,problem,rng,nb_tries)
     .into_iter()
     .map(|exps|
       exps.into_iter()
@@ -58,19 +58,17 @@ pub fn run_reprod_experiments<T> (policies : &[PolicyInit],
 }
 
 fn make_vec_experiment<T>(policies : &[PolicyInit],
-                          problems : &[BanditInit],
+                          problem : BanditInit,
                           rng : &mut T,
                           nb_tries : usize) -> Vec<Vec<Experiment>>
   where T : Rng {
 
-  policies.into_iter()
+  policies.iter()
           .map(|x| once(x).cycle()
                           .take(nb_tries)
-                          .zip(problems.into_iter()
-                          )
-                          .map(|(policy,problem)|
+                          .map(|policy|
                             Experiment::new(create_policy(policy),
-                                            create_bandit(problem,rng))
+                                            create_bandit(&problem,rng))
                           )
                           .collect::<Vec<Experiment>>()
           )
