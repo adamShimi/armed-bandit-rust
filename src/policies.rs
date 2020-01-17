@@ -14,15 +14,24 @@ pub enum PolicyInit<'a> {
            est : &'a EstimatorInit},
 }
 
+pub(crate) fn create_policy(init_data : &PolicyInit) -> PolicyEnum {
+  match init_data {
+    &PolicyInit::EGreedyInit {nb_levers,expl_proba,est} =>
+      EGreedy::new(nb_levers,expl_proba,est).into(),
+    &PolicyInit::UCBInit {nb_levers, est} =>
+      UCB::new(nb_levers,est).into(),
+  }
+}
+
 #[enum_dispatch]
 #[derive(Clone)]
-pub enum PolicyEnum {
+pub(crate) enum PolicyEnum {
   EGreedy,
   UCB,
 }
 
 #[enum_dispatch(PolicyEnum)]
-pub trait Policy : Clone + Send {
+pub(crate) trait Policy : Clone + Send {
   // Choose the action: either a lever for exploiting
   // or the exploring option.
   fn decide<V: Rng>(&self, rng: &mut V) -> usize;
@@ -32,17 +41,8 @@ pub trait Policy : Clone + Send {
   fn update(&mut self, lever : usize, reward : f64);
 }
 
-pub fn create_policy(init_data : &PolicyInit) -> PolicyEnum {
-  match init_data {
-    &PolicyInit::EGreedyInit {nb_levers,expl_proba,est} =>
-      EGreedy::new(nb_levers,expl_proba,est).into(),
-    &PolicyInit::UCBInit {nb_levers, est} =>
-      UCB::new(nb_levers,est).into(),
-  }
-}
-
 #[derive(Clone)]
-pub struct EGreedy {
+pub(crate) struct EGreedy {
   nb_levers : usize,
   expl_proba : f64,
   estimator : EstimatorEnum,
@@ -50,7 +50,7 @@ pub struct EGreedy {
 
 impl EGreedy {
 
-  pub fn new(nb_levers : usize, expl_proba : f64, est : &EstimatorInit) -> Self {
+  pub(crate) fn new(nb_levers : usize, expl_proba : f64, est : &EstimatorInit) -> Self {
     EGreedy {
       nb_levers,
       expl_proba,
@@ -84,7 +84,7 @@ impl Policy for EGreedy {
 }
 
 #[derive(Clone)]
-pub struct UCB {
+pub(crate) struct UCB {
   nb_levers : usize,
   time : f64,
   counts : Vec<f64>,
@@ -93,7 +93,7 @@ pub struct UCB {
 
 impl UCB {
 
-  pub fn new(nb_levers : usize, est : &EstimatorInit) -> Self {
+  pub(crate) fn new(nb_levers : usize, est : &EstimatorInit) -> Self {
     UCB {
       nb_levers,
       time : 0.0,

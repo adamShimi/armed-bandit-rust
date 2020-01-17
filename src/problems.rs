@@ -18,23 +18,7 @@ pub enum BanditInit {
                     },
 }
 
-#[enum_dispatch]
-#[derive(Clone)]
-pub enum BanditEnum {
-  BanditStationary,
-  BanditNonStationary,
-}
-
-#[enum_dispatch(BanditEnum)]
-pub trait Bandit : Clone + Send {
-  // Get reward from a lever.
-  fn use_lever<T: Rng>(&mut self, lever : usize, rng: &mut T) -> f64;
-
-  // Get set of optimal levers.
-  fn is_optimal(&self, lever : usize) -> bool;
-}
-
-pub fn create_bandit<T : Rng>(init_data : &BanditInit, rng : &mut T) -> BanditEnum {
+pub(crate) fn create_bandit<T : Rng>(init_data : &BanditInit, rng : &mut T) -> BanditEnum {
   match init_data {
     &BanditInit::StationaryInit {nb_levers,init_vals} =>
       BanditStationary::new(nb_levers,init_vals,rng).into(),
@@ -43,17 +27,33 @@ pub fn create_bandit<T : Rng>(init_data : &BanditInit, rng : &mut T) -> BanditEn
   }
 }
 
+#[enum_dispatch]
+#[derive(Clone)]
+pub(crate) enum BanditEnum {
+  BanditStationary,
+  BanditNonStationary,
+}
+
+#[enum_dispatch(BanditEnum)]
+pub(crate) trait Bandit : Clone + Send {
+  // Get reward from a lever.
+  fn use_lever<T: Rng>(&mut self, lever : usize, rng: &mut T) -> f64;
+
+  // Get set of optimal levers.
+  fn is_optimal(&self, lever : usize) -> bool;
+}
+
 // Implementatio of a stationary bandit instance, where
 // nb_levers levers are initialized at according to a normal distribution.
 #[derive(Clone)]
-pub struct BanditStationary {
+pub(crate) struct BanditStationary {
   levers : Vec<Normal<f64>>,
   optimals : HashSet<usize>,
 }
 
 impl BanditStationary {
 
-  pub fn new<T: Rng>(nb_levers : usize, init_vals : (f64,f64), rng : &mut T) -> Self {
+  pub(crate) fn new<T: Rng>(nb_levers : usize, init_vals : (f64,f64), rng : &mut T) -> Self {
     let init_distrib = Normal::new(init_vals.0,init_vals.1).unwrap();
     let (levers,optimals) : (Vec<Normal<f64>>,Vec<f64>) =
       (0..nb_levers).map(|_| {
@@ -84,7 +84,7 @@ impl Bandit for BanditStationary {
 // levers start with the same mean and move according to a random
 // walk at each step.
 #[derive(Clone)]
-pub struct BanditNonStationary {
+pub(crate) struct BanditNonStationary {
   levers : Vec<f64>,
   // Only one std, because only the means move according to
   // the random walk; the standard deviation stays the same.
@@ -95,7 +95,7 @@ pub struct BanditNonStationary {
 
 impl BanditNonStationary {
 
-  pub fn new(nb_levers : usize, init_vals : (f64,f64), walk: (f64,f64)) -> Self {
+  pub(crate) fn new(nb_levers : usize, init_vals : (f64,f64), walk: (f64,f64)) -> Self {
     BanditNonStationary {
       levers : vec![init_vals.0; nb_levers],
       std : init_vals.1,

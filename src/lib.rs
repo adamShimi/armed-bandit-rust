@@ -10,11 +10,11 @@ use rand::Rng;
 use rayon::prelude::*;
 use gnuplot::{Graph, Figure, Caption,AxesCommon,AutoOption};
 
-pub mod experiments;
-pub mod problems;
-pub mod policies;
-pub mod estimators;
-pub mod helper;
+mod experiments;
+mod problems;
+mod policies;
+mod estimators;
+mod helper;
 
 pub use problems::BanditInit;
 pub use policies::PolicyInit;

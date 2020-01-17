@@ -8,15 +8,24 @@ pub enum EstimatorInit {
                     step : f64},
 }
 
+pub(crate) fn create_estimator(init_data : &EstimatorInit) -> EstimatorEnum {
+  match init_data {
+    &EstimatorInit::SampleAverageInit {nb_levers} =>
+      SampleAverage::new(nb_levers).into(),
+    &EstimatorInit::ConstantStepInit {nb_levers, step} =>
+      ConstantStep::new(nb_levers,step).into(),
+  }
+}
+
 #[enum_dispatch]
 #[derive(Clone)]
-pub enum EstimatorEnum {
+pub(crate) enum EstimatorEnum {
   SampleAverage,
   ConstantStep,
 }
 
 #[enum_dispatch(EstimatorEnum)]
-pub trait Estimator : Send {
+pub(crate) trait Estimator : Send {
   // Give the current estimate of the required lever.
   fn estimate(&self, lever : usize) -> f64;
 
@@ -36,24 +45,15 @@ pub trait Estimator : Send {
   }
 }
 
-pub fn create_estimator(init_data : &EstimatorInit) -> EstimatorEnum {
-  match init_data {
-    &EstimatorInit::SampleAverageInit {nb_levers} =>
-      SampleAverage::new(nb_levers).into(),
-    &EstimatorInit::ConstantStepInit {nb_levers, step} =>
-      ConstantStep::new(nb_levers,step).into(),
-  }
-}
-
 #[derive(Clone)]
-pub struct SampleAverage {
-  pub counter : Vec<f64>,
-  pub estimates : Vec<f64>,
+pub(crate) struct SampleAverage {
+  counter : Vec<f64>,
+  estimates : Vec<f64>,
 }
 
 impl SampleAverage {
 
-  pub fn new(nb_levers : usize) -> Self {
+  pub(crate) fn new(nb_levers : usize) -> Self {
     SampleAverage {
       counter : vec![1.0;nb_levers],
       estimates : vec![0.0;nb_levers],
@@ -76,14 +76,14 @@ impl Estimator for SampleAverage {
 
 
 #[derive(Clone)]
-pub struct ConstantStep {
-  pub step : f64,
-  pub estimates : Vec<f64>,
+pub(crate) struct ConstantStep {
+  step : f64,
+  estimates : Vec<f64>,
 }
 
 impl ConstantStep {
 
-  pub fn new(nb_levers : usize, step : f64) -> Self {
+  pub(crate) fn new(nb_levers : usize, step : f64) -> Self {
     ConstantStep {
       step,
       estimates : vec![0.0;nb_levers],
