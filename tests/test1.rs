@@ -14,26 +14,24 @@ const NAME3: &str = "e = 0, sample average";
 #[test]
 fn experiment() {
 
-  let problems : Vec<BanditInit> =
-    (0..NB_TRIES).map( |_| BanditInit::StationaryInit {nb_levers : NB_LEVERS,
-                                                       init_vals : GAUSS}
-                 )
-                 .collect();
+  let problem : BanditInit =
+    BanditInit::StationaryInit {nb_levers : NB_LEVERS,
+                                init_vals : GAUSS};
   let est = EstimatorInit::SampleAverageInit {nb_levers : NB_LEVERS};
 
-  let mut policies = Vec::new();
-  policies.push(PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
-                                         expl_proba : EPS,
-                                         est :est.clone()});
-  policies.push(PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
-                                         expl_proba : EPS2,
-                                         est :est.clone()});
-  policies.push(PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
-                                         expl_proba : EPS3,
-                                         est :est.clone()});
+  let policies = [ PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
+                                            expl_proba : EPS,
+                                            est : &est},
+                   PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
+                                            expl_proba : EPS2,
+                                            est : &est},
+                   PolicyInit::EGreedyInit {nb_levers : NB_LEVERS,
+                                            expl_proba : EPS3,
+                                            est : &est}
+                 ];
 
   let results : Vec<Vec<f64>> =
-    bandit_rs::optimal_percentage(bandit_rs::run_experiments(policies,problems,NB_TRIES,LEN_EXP),
+    bandit_rs::optimal_percentage(bandit_rs::run_experiments(&policies,problem,NB_TRIES,LEN_EXP),
                                   NB_TRIES,
                                   LEN_EXP);
 
