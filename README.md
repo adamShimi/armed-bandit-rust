@@ -14,7 +14,7 @@ and applying reinforcement learning techniques to it.
 * ~~Use only reference of init structures.~~ Done
 * ~~Use only one init structure of problem.~~ Done,
 * ~~Remove init structures from new.~~ Done
-* Make only init structures and lib function visible in the API.
+* ~~Make only init structures and lib function visible in the API.~~ Done
 * Update examples.
 * Add parameter study.
 * Write comments.
