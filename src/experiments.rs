@@ -7,7 +7,7 @@ use crate::policies::PolicyEnum;
 
 
 #[derive(Clone)]
-pub struct Experiment {
+pub(crate) struct Experiment {
   policy : PolicyEnum,
   problem : BanditEnum,
   results : Vec<Step>,
@@ -15,7 +15,7 @@ pub struct Experiment {
 
 impl Experiment {
 
-  pub fn new(policy : PolicyEnum,
+  pub(crate) fn new(policy : PolicyEnum,
              problem : BanditEnum) -> Self {
     Experiment {
       problem,
@@ -24,7 +24,7 @@ impl Experiment {
     }
   }
 
-  pub fn steps<V: Rng>(mut self, steps : usize, rng : &mut V) -> Vec<Step> {
+  pub(crate) fn steps<V: Rng>(mut self, steps : usize, rng : &mut V) -> Vec<Step> {
     for _ in 0..steps {
       let lever = self.policy.decide(rng);
       let optimal = self.problem.is_optimal(lever);
