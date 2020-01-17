@@ -93,7 +93,8 @@ pub fn optimal_percentage(results : Vec<Vec<Vec<Step>>>,
          .collect()
 }
 
-pub fn plot_results(results : Vec<(&str,Vec<f64>)>,
+pub fn plot_results(results : &[Vec<f64>],
+                    names : &[&str],
                     len_exp : usize) {
 
   let mut output = Figure::new();
@@ -106,10 +107,10 @@ pub fn plot_results(results : Vec<(&str,Vec<f64>)>,
           .set_y_range(AutoOption::Fix(0.0),AutoOption::Fix(1.0));
 
   let time_steps : &[usize] = &(1..=len_exp).collect::<Vec<usize>>();
-  for (name,vals) in results.iter() {
+  for (name,vals) in names.iter().zip(results.iter()) {
     axes.lines(time_steps,
-              &vals[..],
-              &[Caption(name)],
+               vals,
+               &[Caption(name)],
     );
   }
   output.show().unwrap();
