@@ -35,10 +35,7 @@ fn experiment() {
                                   NB_TRIES,
                                   LEN_EXP);
 
-  let mut names = Vec::new();
-  names.push(NAME);
-  names.push(NAME2);
-  names.push(NAME3);
+  let names = [NAME,NAME2,NAME3];
 
-  bandit_rs::plot_results(names.into_iter().zip(results.into_iter()).collect(), LEN_EXP);
+  bandit_rs::plot_results(&results[..], &names, LEN_EXP);
 }

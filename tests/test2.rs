@@ -2,7 +2,7 @@ use bandit_rs::{BanditInit,EstimatorInit,PolicyInit};
 
 const NB_LEVERS:usize = 10;
 const NB_TRIES:usize = 2000;
-const LEN_EXP:usize = 2000;
+const LEN_EXP:usize = 10000;
 const GAUSS:(f64,f64) = (0.0,1.0);
 const WALK:(f64,f64) = (0.0,0.10);
 const EPS:f64 = 0.1;
@@ -37,9 +37,7 @@ fn experiment() {
                                   NB_TRIES,
                                   LEN_EXP);
 
-  let mut names = Vec::new();
-  names.push(NAME);
-  names.push(NAME2);
+  let names = [ NAME, NAME2 ];
 
-  bandit_rs::plot_results(names.into_iter().zip(results.into_iter()).collect(), LEN_EXP);
+  bandit_rs::plot_results(&results,&names, LEN_EXP);
 }
