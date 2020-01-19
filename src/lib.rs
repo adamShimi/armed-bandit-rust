@@ -5,6 +5,7 @@ extern crate rayon;
 extern crate gnuplot;
 
 use std::iter::once;
+use std::ops::Range;
 
 use rand::Rng;
 use rayon::prelude::*;
@@ -116,3 +117,24 @@ pub fn plot_results(results : &[Vec<f64>],
   output.show().unwrap();
 }
 
+
+pub fn run_parameter_study(problem : &BanditInit,
+                           policy : &PolicyInit,
+                           step_base : f64,
+                           range : Range<u32>) {
+  match policy {
+    &PolicyInit::EGreedyInit {nb_levers, expl_proba : _, est} => {
+      let policies : Vec<PolicyInit> =
+        range.map(|x| PolicyInit::EGreedyInit {nb_levers,
+                                               expl_proba : step_base*(x as f64),
+                                               est})
+             .collect();},
+    &PolicyInit::UCBInit {nb_levers, step : _, est} => {
+      let policies : Vec<PolicyInit> =
+        range.map(|x| PolicyInit::UCBInit {nb_levers,
+                                           step : step_base*(x as f64),
+                                           est})
+             .collect();},
+
+  }
+}
