@@ -11,6 +11,7 @@ pub enum PolicyInit<'a> {
                expl_proba : f64,
                est : &'a EstimatorInit},
   UCBInit {nb_levers : usize,
+           step : f64,
            est : &'a EstimatorInit},
 }
 
@@ -18,8 +19,8 @@ pub(crate) fn create_policy(init_data : &PolicyInit) -> PolicyEnum {
   match init_data {
     &PolicyInit::EGreedyInit {nb_levers,expl_proba,est} =>
       EGreedy::new(nb_levers,expl_proba,est).into(),
-    &PolicyInit::UCBInit {nb_levers, est} =>
-      UCB::new(nb_levers,est).into(),
+    &PolicyInit::UCBInit {nb_levers,step, est} =>
+      UCB::new(nb_levers,step,est).into(),
   }
 }
 
@@ -86,6 +87,7 @@ impl Policy for EGreedy {
 #[derive(Clone)]
 pub(crate) struct UCB {
   nb_levers : usize,
+  step : f64,
   time : f64,
   counts : Vec<f64>,
   estimator : EstimatorEnum,
@@ -93,9 +95,10 @@ pub(crate) struct UCB {
 
 impl UCB {
 
-  pub(crate) fn new(nb_levers : usize, est : &EstimatorInit) -> Self {
+  pub(crate) fn new(nb_levers : usize, step : f64, est : &EstimatorInit) -> Self {
     UCB {
       nb_levers,
+      step,
       time : 0.0,
       counts : vec![0.0;nb_levers],
       estimator : create_estimator(est).into()
@@ -110,7 +113,7 @@ impl Policy for UCB {
       self.estimator.all(self.nb_levers)
                     .iter()
                     .zip(self.counts.iter())
-                    .map( |x| x.0 + (2.0*self.time.log(2.0) / *x.1).sqrt())
+                    .map( |x| x.0 + self.step*(self.time.ln() / *x.1).sqrt())
                     .collect();
     *helper::indices_max(&est_counts)
             .iter()
