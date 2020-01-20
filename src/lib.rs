@@ -120,21 +120,66 @@ pub fn plot_results(results : &[Vec<f64>],
 
 pub fn run_parameter_study(problem : &BanditInit,
                            policy : &PolicyInit,
+                           len_exp : usize,
                            step_base : f64,
                            range : Range<u32>) {
+  let policies : Vec<PolicyInit>;
+  let egreedy : bool;
+  let ucb : bool;
   match policy {
     &PolicyInit::EGreedyInit {nb_levers, expl_proba : _, est} => {
-      let policies : Vec<PolicyInit> =
-        range.map(|x| PolicyInit::EGreedyInit {nb_levers,
+      policies =
+        range.clone()
+             .map(|x| PolicyInit::EGreedyInit {nb_levers,
                                                expl_proba : step_base*(x as f64),
                                                est})
-             .collect();},
+             .collect();
+      egreedy = true;
+      ucb = false;},
     &PolicyInit::UCBInit {nb_levers, step : _, est} => {
-      let policies : Vec<PolicyInit> =
-        range.map(|x| PolicyInit::UCBInit {nb_levers,
+      policies =
+        range.clone()
+             .map(|x| PolicyInit::UCBInit {nb_levers,
                                            step : step_base*(x as f64),
                                            est})
-             .collect();},
+             .collect();
+      egreedy = true;
+      ucb = false;},
 
   }
+  let results : Vec<f64> =
+    policies.iter()
+            .map(|policy| {
+              let exp = Experiment::new(create_policy(policy),
+                                        create_bandit(&problem,&mut rand::thread_rng()));
+              let result = exp.steps(len_exp, &mut rand::thread_rng());
+              (result.into_iter()
+                    .filter(|x| x.optimal)
+                    .count() as f64) / (len_exp as f64)
+            })
+            .collect();
+
+  let mut output = Figure::new();
+  let axes =
+    output.axes2d()
+          .set_title("Percentage of optimal action in first 1000 steps", &[])
+          .set_legend(Graph(0.5), Graph(0.9), &[], &[])
+          .set_x_label("Value of parameter", &[])
+          .set_y_label("Percentage of optimal actions", &[])
+          .set_y_range(AutoOption::Fix(0.0),AutoOption::Fix(1.0));
+
+  let time_steps : &[f64] = &range.map(|x| step_base*(x as f64))
+                                  .collect::<Vec<f64>>()[..];
+  match (egreedy,ucb) {
+    (true,false) => {axes.lines(time_steps,
+                               results,
+                               &[Caption("EGreedy")],
+                              );},
+    (false,true) => {axes.lines(time_steps,
+                               results,
+                               &[Caption("UCB")],
+                              );},
+    _ => {panic!("Impossible!");},
+  }
+  output.show().unwrap();
 }
