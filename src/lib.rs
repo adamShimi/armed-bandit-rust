@@ -122,7 +122,9 @@ pub fn run_parameter_study(policy : &PolicyInit,
                            problem : &BanditInit,
                            len_exp : usize,
                            range : Range<u32>) {
+
   let policies : Vec<PolicyInit>;
+  let step_base : f64;
   let egreedy : bool;
   let ucb : bool;
   match policy {
@@ -133,6 +135,7 @@ pub fn run_parameter_study(policy : &PolicyInit,
                                                expl_proba : expl_proba*(x as f64),
                                                est})
              .collect();
+      step_base = expl_proba;
       egreedy = true;
       ucb = false;},
     &PolicyInit::UCBInit {nb_levers, step, est} => {
@@ -142,6 +145,7 @@ pub fn run_parameter_study(policy : &PolicyInit,
                                            step : step*(x as f64),
                                            est})
              .collect();
+      step_base = step;
       egreedy = true;
       ucb = false;},
 
