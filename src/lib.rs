@@ -118,8 +118,8 @@ pub fn plot_results(results : &[Vec<f64>],
 }
 
 
-pub fn run_parameter_study(problem : &BanditInit,
-                           policy : &PolicyInit,
+pub fn run_parameter_study(policy : &PolicyInit,
+                           problem : &BanditInit,
                            len_exp : usize,
                            range : Range<u32>) {
   let policies : Vec<PolicyInit>;
