@@ -121,26 +121,25 @@ pub fn plot_results(results : &[Vec<f64>],
 pub fn run_parameter_study(problem : &BanditInit,
                            policy : &PolicyInit,
                            len_exp : usize,
-                           step_base : f64,
                            range : Range<u32>) {
   let policies : Vec<PolicyInit>;
   let egreedy : bool;
   let ucb : bool;
   match policy {
-    &PolicyInit::EGreedyInit {nb_levers, expl_proba : _, est} => {
+    &PolicyInit::EGreedyInit {nb_levers, expl_proba, est} => {
       policies =
         range.clone()
              .map(|x| PolicyInit::EGreedyInit {nb_levers,
-                                               expl_proba : step_base*(x as f64),
+                                               expl_proba : expl_proba*(x as f64),
                                                est})
              .collect();
       egreedy = true;
       ucb = false;},
-    &PolicyInit::UCBInit {nb_levers, step : _, est} => {
+    &PolicyInit::UCBInit {nb_levers, step, est} => {
       policies =
         range.clone()
              .map(|x| PolicyInit::UCBInit {nb_levers,
-                                           step : step_base*(x as f64),
+                                           step : step*(x as f64),
                                            est})
              .collect();
       egreedy = true;
