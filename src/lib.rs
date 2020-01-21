@@ -132,7 +132,7 @@ pub fn run_parameter_study(policy : &PolicyInit,
       policies =
         range.clone()
              .map(|x| PolicyInit::EGreedyInit {nb_levers,
-                                               expl_proba : expl_proba*(x as f64),
+                                               expl_proba : expl_proba*(2.0_f64).powi(x as i32),
                                                est})
              .collect();
       step_base = expl_proba;
@@ -142,7 +142,7 @@ pub fn run_parameter_study(policy : &PolicyInit,
       policies =
         range.clone()
              .map(|x| PolicyInit::UCBInit {nb_levers,
-                                           step : step*(x as f64),
+                                           step : step*(2.0_f64).powi(x as i32),
                                            est})
              .collect();
       step_base = step;
@@ -167,11 +167,12 @@ pub fn run_parameter_study(policy : &PolicyInit,
     output.axes2d()
           .set_title("Percentage of optimal action in first 1000 steps", &[])
           .set_legend(Graph(0.5), Graph(0.9), &[], &[])
+          .set_x_log(Some(2.0))
           .set_x_label("Value of parameter", &[])
           .set_y_label("Percentage of optimal actions", &[])
           .set_y_range(AutoOption::Fix(0.0),AutoOption::Fix(1.0));
 
-  let time_steps : &[f64] = &range.map(|x| step_base*(x as f64))
+  let time_steps : &[f64] = &range.map(|x| step_base*(2.0_f64).powi(x as i32))
                                   .collect::<Vec<f64>>()[..];
   match (egreedy,ucb) {
     (true,false) => {axes.lines(time_steps,
