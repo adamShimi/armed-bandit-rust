@@ -156,9 +156,9 @@ pub fn run_parameter_study(policy : &PolicyInit,
               let exp = Experiment::new(create_policy(policy),
                                         create_bandit(&problem,&mut rand::thread_rng()));
               let result = exp.steps(len_exp, &mut rand::thread_rng());
-              (result.into_iter()
-                    .filter(|x| x.optimal)
-                    .count() as f64) / (len_exp as f64)
+              result.into_iter()
+                    .map(|x| x.reward)
+                    .sum::<f64>() / (len_exp as f64)
             })
             .collect();
 
@@ -169,8 +169,7 @@ pub fn run_parameter_study(policy : &PolicyInit,
           .set_legend(Graph(0.5), Graph(0.9), &[], &[])
           .set_x_log(Some(2.0))
           .set_x_label("Value of parameter", &[])
-          .set_y_label("Percentage of optimal actions", &[])
-          .set_y_range(AutoOption::Fix(0.0),AutoOption::Fix(1.0));
+          .set_y_label("Percentage of optimal actions", &[]);
 
   let time_steps : &[f64] = &range.map(|x| step_base*(2.0_f64).powi(x as i32))
                                   .collect::<Vec<f64>>()[..];
