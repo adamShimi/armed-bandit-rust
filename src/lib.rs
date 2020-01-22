@@ -165,11 +165,11 @@ pub fn run_parameter_study(policy : &PolicyInit,
   let mut output = Figure::new();
   let axes =
     output.axes2d()
-          .set_title("Percentage of optimal action in first 1000 steps", &[])
+          .set_title("Average reward over first 1000 steps", &[])
           .set_legend(Graph(0.5), Graph(0.9), &[], &[])
           .set_x_log(Some(2.0))
           .set_x_label("Value of parameter", &[])
-          .set_y_label("Percentage of optimal actions", &[]);
+          .set_y_label("Average reward", &[]);
 
   let time_steps : &[f64] = &range.map(|x| step_base*(2.0_f64).powi(x as i32))
                                   .collect::<Vec<f64>>()[..];
