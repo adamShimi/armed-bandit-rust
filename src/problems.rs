@@ -19,10 +19,10 @@ pub enum BanditInit {
 }
 
 pub(crate) fn create_bandit<T : Rng>(init_data : &BanditInit, rng : &mut T) -> BanditEnum {
-  match init_data {
-    &BanditInit::StationaryInit {nb_levers,init_vals} =>
+  match *init_data {
+    BanditInit::StationaryInit {nb_levers,init_vals} =>
       BanditStationary::new(nb_levers,init_vals,rng).into(),
-    &BanditInit::NonStationaryInit {nb_levers,init_vals,walk} =>
+    BanditInit::NonStationaryInit {nb_levers,init_vals,walk} =>
       BanditNonStationary::new(nb_levers,init_vals,walk).into(),
   }
 }

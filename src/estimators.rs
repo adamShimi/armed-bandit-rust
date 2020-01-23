@@ -9,10 +9,10 @@ pub enum EstimatorInit {
 }
 
 pub(crate) fn create_estimator(init_data : &EstimatorInit) -> EstimatorEnum {
-  match init_data {
-    &EstimatorInit::SampleAverageInit {nb_levers} =>
+  match *init_data {
+    EstimatorInit::SampleAverageInit {nb_levers} =>
       SampleAverage::new(nb_levers).into(),
-    &EstimatorInit::ConstantStepInit {nb_levers, step} =>
+    EstimatorInit::ConstantStepInit {nb_levers, step} =>
       ConstantStep::new(nb_levers,step).into(),
   }
 }

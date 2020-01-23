@@ -127,8 +127,8 @@ pub fn run_parameter_study(policy : &PolicyInit,
   let step_base : f64;
   let egreedy : bool;
   let ucb : bool;
-  match policy {
-    &PolicyInit::EGreedyInit {nb_levers, expl_proba, est} => {
+  match *policy {
+    PolicyInit::EGreedyInit {nb_levers, expl_proba, est} => {
       policies =
         range.clone()
              .map(|x| PolicyInit::EGreedyInit {nb_levers,
@@ -138,7 +138,7 @@ pub fn run_parameter_study(policy : &PolicyInit,
       step_base = expl_proba;
       egreedy = true;
       ucb = false;},
-    &PolicyInit::UCBInit {nb_levers, step, est} => {
+    PolicyInit::UCBInit {nb_levers, step, est} => {
       policies =
         range.clone()
              .map(|x| PolicyInit::UCBInit {nb_levers,

@@ -16,10 +16,10 @@ pub enum PolicyInit<'a> {
 }
 
 pub(crate) fn create_policy(init_data : &PolicyInit) -> PolicyEnum {
-  match init_data {
-    &PolicyInit::EGreedyInit {nb_levers,expl_proba,est} =>
+  match *init_data {
+    PolicyInit::EGreedyInit {nb_levers,expl_proba,est} =>
       EGreedy::new(nb_levers,expl_proba,est).into(),
-    &PolicyInit::UCBInit {nb_levers,step, est} =>
+    PolicyInit::UCBInit {nb_levers,step, est} =>
       UCB::new(nb_levers,step,est).into(),
   }
 }
@@ -55,7 +55,7 @@ impl EGreedy {
     EGreedy {
       nb_levers,
       expl_proba,
-      estimator : create_estimator(est).into()
+      estimator : create_estimator(est)
     }
   }
 
@@ -101,7 +101,7 @@ impl UCB {
       step,
       time : 0.0,
       counts : vec![0.0;nb_levers],
-      estimator : create_estimator(est).into()
+      estimator : create_estimator(est)
     }
   }
 }
